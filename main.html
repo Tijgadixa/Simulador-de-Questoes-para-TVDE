@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVDE • Simulador de Exame</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- HOME SCREEN -->
+        <div id="homeScreen" class="screen home-screen">
+            <div class="home-header">
+                <h2>🚖 Simulador TVDE · IMT</h2>
+            </div>
+
+            <div class="info-card">
+                <p><strong>📋 Este simulador permite-lhe praticar para o exame oficial do IMT com 30 perguntas aleatórias, sorteadas de uma base com 331 questões reais.</strong></p>
+                
+                <div class="stat-box">
+                    <div class="number">30</div>
+                    <div class="label">Perguntas</div>
+                </div>
+
+                <p>✓ Cada teste tem 30 perguntas</p>
+                <p>✓ Pode navegar livremente entre questões</p>
+                <p>✓ As respostas ficam guardadas automaticamente</p>
+
+                <div style="background: white; border-radius: 10px; padding: 15px; margin: 15px 0; border-left: 4px solid #f3b33d;">
+                    <p><strong>📊 Critério de aprovação:</strong></p>
+                    <p style="color: #28a745;">✅ Aprovado: mínimo 27 respostas corretas</p>
+                    <p style="color: #dc3545;">❌ Reprovado: 26 ou menos respostas corretas</p>
+                </div>
+            </div>
+
+            <button class="start-btn" id="startTestBtn">▶ COMEÇAR TESTE</button>
+            <div class="warning-note">🍀 Boa sorte!</div>
+        </div>
+
+        <!-- TEST SCREEN -->
+        <div id="testScreen" class="screen hidden">
+            <div class="test-header">
+                <div class="test-info">
+                    <span class="badge" id="qCounter">1/30</span>
+                    <span class="badge" id="answeredCounter">0 respondidas</span>
+                </div>
+                <button class="exit-btn" id="exitToHomeBtn">🏠 Sair</button>
+            </div>
+
+            <div id="questionNav" class="question-nav"></div>
+
+            <div class="question-card">
+                <div id="imageContainer" class="image-container">
+                    <img id="questionImage" src="" alt="Imagem da questão">
+                    <!-- <div class="image-caption">Clique na imagem para ampliar</div> -->
+                </div>
+
+                <div class="question-text" id="questionText">Carregando...</div>
+
+                <div class="options" id="optionsContainer"></div>
+            </div>
+
+            <div class="navigation">
+                <button class="nav-btn" id="prevBtn" disabled>← Anterior</button>
+                <button class="nav-btn" id="nextBtn">Seguinte →</button>
+            </div>
+
+            <div class="submit-section">
+                <button class="submit-btn disabled" id="submitTestBtn" disabled>✅ SUBMETER TESTE</button>
+                <div id="submitWarning" class="warning-message"></div>
+            </div>
+        </div>
+
+        <!-- RESULT SCREEN -->
+        <div id="resultScreen" class="screen hidden">
+            <div class="result-card">
+                <div class="result-icon" id="resultIcon">📊</div>
+                <div class="result-status" id="resultStatus">RESULTADO</div>
+
+                <div class="result-score">
+                    <div class="big" id="resultScore">0/30</div>
+                    <div class="small" id="resultDetail">0 respostas corretas</div>
+                </div>
+
+                <div class="result-message" id="resultMessage"></div>
+
+                <div class="result-actions">
+                    <button class="result-btn primary" id="newTestBtn">↻ NOVO TESTE</button>
+                    <button class="result-btn secondary" id="reviewBtn">📋 REVER RESPOSTAS</button>
+                    <button class="result-btn secondary" id="homeBtn">INÍCIO</button>
+                </div>
+
+                <div id="reviewPanel" class="review-panel hidden">
+                    <h3 style="margin-bottom: 15px;">📝 Revisão das Respostas</h3>
+                    <div id="reviewContent"></div>
+                    <button class="result-btn secondary" id="hideReviewBtn" style="margin-top: 15px; width: 100%;">Ocultar Revisão</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Made by Patrícia Correia
+        </div>
+    </div>
+
+    <!-- Modal para imagem -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close" id="closeModalBtn">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Imagem ampliada">
+        </div>
+    </div>
+
+    <script>
+        // ========== DADOS DAS PERGUNTAS (com respostas corretas atualizadas) ==========
+        const allQuestions = [
+        // PÁGINA 1
+        { id:130001, q:"Qual destes comportamentos é aceitável num motorista de TVDE?", opts:[{id:1130001,txt:"Falar com os passageiros durante a viagem."},{id:2130001,txt:"Insultar os outros condutores."},{id:3130001,txt:"Utilizar palavras impróprias durante a conversa com os passageiros."}], correct:1130001, hasImage:false },
+        { id:130002, q:"Quando se pode dizer que a comunicação tem sucesso?", opts:[{id:1130002,txt:"Quando a mensagem é simples."},{id:2130002,txt:"Quando a mensagem é complexa."},{id:3130002,txt:"Quando a mensagem é recebida."},{id:4130002,txt:"Quando a mensagem é compreendida."}], correct:4130002, hasImage:false },
+        { id:130003, q:"O recetor descodifica a mensagem de acordo com:", opts:[{id:1130003,txt:"As suas perceções."},{id:2130003,txt:"As perceções do emissor."},{id:3130003,txt:"Os seus interesses."},{id:4130003,txt:"Com o sentido das palavras."}], correct:1130003 },
+        { id:130004, q:"Quando se cria uma mensagem, o que se pretende é:", opts:[{id:1130004,txt:"Atingir o objetivo."},{id:2130004,txt:"Estar em consonância com o recetor."},{id:3130004,txt:"Simplificar a tarefa de quem recebe."},{id:4130004,txt:"Adaptar o nível de informação."}], correct:1130004, hasImage:false },
+        { id:130005, q:"Para ser considerado bom ouvinte deve:", opts:[{id:1130005,txt:"Evitar contato visual com quem está a falar."},{id:2130005,txt:"Evitar a comunicação frente a frente."},{id:3130005,txt:"Dizer o que pensa sobre o assunto."},{id:4130005,txt:"Evitar emitir opiniões."}], correct:4130005, hasImage:false },
+        // PÁGINA 2
+        { id:130006, q:"Qual o melhor meio formal de comunicação tendo em vista assegurar a sua eficácia?", opts:[{id:1130006,txt:"Correio eletrónico."},{id:2130006,txt:"Videoconferência."},{id:3130006,txt:"Telefone ou fax."},{id:4130006,txt:"Reunião presencial."}], correct:4130006, hasImage:false },
+        { id:130007, q:"Qual a melhor forma de recompensar o desempenho profissional?", opts:[{id:1130007,txt:"Melhoria das condições de trabalho."},{id:2130007,txt:"Através de incentivo verbal."},{id:3130007,txt:"Através de reconhecimento a nível da organização entre os outros empregados."}], correct:1130007, hasImage:false },
+        { id:130008, q:"Quando pretende iniciar uma conversa deve adaptar a mensagem em função:", opts:[{id:1130008,txt:"Da contribuição que pretende receber."},{id:2130008,txt:"Dos objetivos que pretende atingir."},{id:3130008,txt:"Do entusiasmo que coloca no tema."},{id:4130008,txt:"Do interlocutor."}], correct:4130008, hasImage:false },
+        { id:130009, q:"Muitos dos problemas profissionais surgem por falhas de comunicação. A mais importante é:", opts:[{id:1130009,txt:"Não saber ouvir."},{id:2130009,txt:"Não ser inteligente."},{id:3130009,txt:"Ser de classe social diferente."},{id:4130009,txt:"Ser de raça e cultura diferente."}], correct:1130009, hasImage:false },
+        { id:130010, q:"O aspeto mais importante para se obter sucesso quando se pretende estabelecer comunicação é:", opts:[{id:1130010,txt:"Fazer perguntas para esclarecer o ponto de vista da outra pessoa."},{id:2130010,txt:"Ser recetivo ao conteúdo e às emoções da outra pessoa."},{id:3130010,txt:"Ouvir para compreender."},{id:4130010,txt:"Demonstrar sempre concordância."}], correct:3130010, hasImage:false },
+        // PÁGINA 3
+        { id:130011, q:"Apesar de existirem vários estilos de comunicação devemos utilizar preferencialmente:", opts:[{id:1130011,txt:"Passivo."},{id:2130011,txt:"Agressivo."},{id:3130011,txt:"Assertivo."}], correct:3130011, hasImage:false },
+        { id:130012, q:"O motorista, no exercício da sua atividade, não pode:", opts:[{id:1130012,txt:"Fumar."},{id:2130012,txt:"Escutar atentamente o cliente"},{id:3130012,txt:"Ser cordial"},{id:4130012,txt:"Estar atento ao interlocutor"}], correct:1130012, hasImage:false },
+        { id:130013, q:"As competências exigidas para o desempenho da função de motorista são:", opts:[{id:1130013,txt:"Meramente técnicas."},{id:2130013,txt:"Organizacionais e técnicas."},{id:3130013,txt:"Organizacionais, relacionais e técnicas."}], correct:3130013, hasImage:false },
+        { id:130014, q:"A Imagem de um motorista é formada em 30 segundos, dando-se maior Importância a:", opts:[{id:1130014,txt:"Comunicação."},{id:2130014,txt:"Aparência."},{id:3130014,txt:"Conhecimento."}], correct:2130014, hasImage:false },
+        { id:130015, q:"Quais as características que definem um bom líder?", opts:[{id:1130015,txt:"Ser capaz de apresentar uma visão que outros queiram alcançar."},{id:2130015,txt:"Ser ambicioso, carismático, confiante, independente e responsável."},{id:3130015,txt:"Ser capaz de satisfazer as necessidades pessoais e de grupo."}], correct:1130015, hasImage:false },
+        // PÁGINA 4
+        { id:130016, q:"O que se entende por comunicação interpessoal?", opts:[{id:1130016,txt:"Método de comunicação que promove a troca de informação entre duas ou mais pessoas."},{id:2130016,txt:"Método de comunicação efetuado apenas por um interveniente."},{id:3130016,txt:"Atividade inativa e descontinua de troca de informações."}], correct:1130016, hasImage:false },
+        { id:130017, q:"O processo de comunicação prevê a existência mínima de:", opts:[{id:1130017,txt:"Um emissor."},{id:2130017,txt:"Um recetor."},{id:3130017,txt:"Um emissor e um recetor."}], correct:3130017, hasImage:false },
+        { id:130018, q:"O que se entende por ruídos durante o processo de comunicação?", opts:[{id:1130018,txt:"Algo que interfere com a mensagem enviada, mas que não altera o seu significado."},{id:2130018,txt:"Algo que interfere com a mensagem enviada, bloqueando e alterando o seu significado."},{id:3130018,txt:"Algo que interfere com a mensagem enviada que bloqueia mas não altera o seu significado."}], correct:2130018, hasImage:false },
+        { id:130019, q:"Fazem parte das barreiras Internas à comunicação:", opts:[{id:1130019,txt:"Diferenças sociais, culturais, sexuais, os julgamentos e as suposições."},{id:2130019,txt:"Apenas as diferenças sociais, culturais e sexuais."},{id:3130019,txt:"Unicamente as diferenças sociais e culturais."}], correct:1130019, hasImage:false },
+        { id:130020, q:"Chamamos feedback:", opts:[{id:1130020,txt:"À comunicação transmitida de forma correta ao seu interlocutor, que tem acompanhamento para saber se este atua de forma correta ou se precisa corrigir ou melhorar."},{id:2130020,txt:"Ao insucesso da comunicação."},{id:3130020,txt:"À comunicação transmitida pelo recetor."},{id:4130020,txt:"À comunicação que depende só da forma como a mensagem é transmitida."}], correct:1130020, hasImage:false },
+        // PÁGINA 5
+        { id:677, q:"Nesta situação posso ultrapassar o automóvel de cor preta?", opts:[{id:10677,txt:"Posso pela direita porque a via está livre."},{id:20677,txt:"Não posso."},{id:30677,txt:"Não posso, porque a ultrapassagem faz-se pelo lado esquerdo."}], correct:30677, hasImage:true },
+        { id:686, q:"Nesta situação, devo aumentar a velocidade?", opts:[{id:10686,txt:"Sim."},{id:20686,txt:"Não."}], correct:20686, hasImage:true },
+        { id:960, q:"Perante o sinal de informação fico a saber que:", opts:[{id:10960,txt:"Só é permitido o estacionamento de autocarros."},{id:20960,txt:"É permitido o estacionamento a todos os veículos."},{id:30960,txt:"É permitida a paragem, mas não o estacionamento de automóveis."}], correct:30960, hasImage:true },
+        { id:1133, q:"Neste local é proibido ultrapassar.", opts:[{id:11133,txt:"Certo."},{id:21133,txt:"Errado."}], correct:11133, hasImage:true },
+        { id:1172, q:"O sinal de mudança de direcção para a esquerda, do veículo que segue à frente, pode indicar-me:", opts:[{id:11172,txt:"Diminuição de velocidade."},{id:21172,txt:"Início de uma ultrapassagem."},{id:31172,txt:"Início de manobra de marcha atrás."}], correct:21172, hasImage:true },
+        { id:2568, q:"Ao ultrapassar o automóvel pesado, que comportamento devo esperar do seu condutor?", opts:[{id:12568,txt:"Que reduz a sua velocidade."},{id:22568,txt:"Que mantenha a velocidade e se desvie o mais possível para a direita."},{id:32568,txt:"Que aumente a sua velocidade."}], correct:22568, hasImage:true },
+        // PÁGINA 6        
+        { id:2569, q:"Que sinal devo fazer ao Iniciar a ultrapassagem do veículo pesado que circula à minha frente?", opts:[{id:12569,txt:"Sinal de mudança de direcção à direita."},{id:22569,txt:"Sinal de luzes."},{id:32569,txt:"Sinal de mudança de direcção à esquerda."}], correct:32569, hasImage:true },
+        { id:2570, q:"Como devo proceder quando verífico que o condutor do veículo que circula à minha retaguarda me pretende ultrapassar?", opts:[{id:12570,txt:"Reduzir a velocidade."},{id:22570,txt:"Desviar-me o mais possível para a esquerda."},{id:32570,txt:"Não aumentar a velocidade e desviar-me o mais possível para a direita."}], correct:32570, hasImage:true },
+        { id:2571, q:"Na via em que me encontro é permitido realizar a manobra de ultrapassagem pela direita?", opts:[{id:12571,txt:"Sim, visto tratar-se de uma auto-estrada."},{id:22571,txt:"Sim, caso o condutor da frente mude de direcção à esquerda."},{id:32571,txt:"Não, em circunstância alguma."}], correct:22571, hasImage:true },
+        { id:2572, q:"Posso ultrapassar o veículo que circula à minha frente?", opts:[{id:12572,txt:"Sim, a manobra é permitida."},{id:22572,txt:"Não, devo aguardar que termine a manobra."}], correct:12572, hasImage:true },
+        { id:5016, q:"Posso ultrapassar pela direita o veículo de mercadorias?", opts:[{id:15016,txt:"Sim, posso."},{id:25016,txt:"Não, a ultrapassagem pela direita é proibida."}], correct:25016, hasImage:true },
+        { id:5057, q:"Posso ultrapassar?", opts:[{id:15057,txt:"Sim, porque o local tem pouca intensidade de trânsito."},{id:25057,txt:"Sim, porque o local tem dois sentidos de trânsito."},{id:35057,txt:"Sim, porque existem duas vias de trânsito no mesmo sentido."}], correct:35057, hasImage:true },
+        // PÁGINA 7
+        { id:6037, q:"Pretendo ultrapassar. Posso fazê-lo?", opts:[{id:16037,txt:"Sim, desde que o faça pela direita."},{id:26037,txt:"Sim, desde que o faça pela esquerda e não circulem veículos em sentido contrário."},{id:36037,txt:"Não, porque a sinalização existente no local proíbe-me."}], correct:26037, hasImage:true },
+        { id:6042, q:"Posso ultrapassar, pela direita, o motociclo que circula a 60 Km/h?", opts:[{id:16042,txt:"Sim, desde que sinalize devidamente a manobra."},{id:26042,txt:"Não, porque é proibido."},{id:36042,txt:"Sim, porque existem duas filas de trânsito no mesmo sentido."}], correct:26042, hasImage:true },
+        { id:6064, q:"Nesta situação devo:", opts:[{id:16064,txt:"Desviar-me o mais possível para a direita e manter a velocidade."},{id:26064,txt:"Buzinar para advertir o condutor que é proibido ultrapassar em pontes."},{id:36064,txt:"Travar bruscamente para facilitar a ultrapassagem."}], correct:16064, hasImage:true },
+        { id:6910, q:"Perante o sinal vertical só os automóveis pesados de mercadorias estão proibidos de ultrapassar.", opts:[{id:16910,txt:"Certo."},{id:26910,txt:"Errado."}], correct:26910, hasImage:true },
+        { id:6949, q:"A faixa de rodagem está dividida por uma linha descontínua. Estou correctamente posicionado se estiver a efectuar uma ultrapassagem.", opts:[{id:16949,txt:"Certo."},{id:26949,txt:"Errado."}], correct:16949, hasImage:true },
+        { id:6959, q:"A faixa de rodagem está dividida por uma linha descontínua. Estou correctamente posicionado se:", opts:[{id:16959,txt:"Pretender ultrapassar o veículo da frente."},{id:26959,txt:"Estiver a efectuar uma ultrapassagem."},{id:36959,txt:"Pretender estacionar do lado esquerdo da faixa de rodagem."}], correct:26959, hasImage:true },
+        // PÁGINA 8
+        { id:7144, q:"Estou a ser correctamente ultrapassado?", opts:[{id:17144,txt:"Sim, estou."},{id:27144,txt:"Não, porque a realização da manobra pode provocar embaraço para o trânsito."},{id:37144,txt:"Não, porque é proibido ultrapassar nas pontes."}], correct:27144, hasImage:true },
+        { id:7633, q:"Posso ultrapassar neste local?", opts:[{id:17633,txt:"Sim, desde que não aumente a velocidade."},{id:27633,txt:"Não."},{id:37633,txt:"Sim, desde que ocupe apenas uma faixa de rodagem."}], correct:27633, hasImage:true },
+        { id:130021, q:"O sinal de mudança de direção para a esquerda, do veículo que segue à frente, pode indicar-me:", opts:[{id:1130021,txt:"Diminuição de velocidade."},{id:2130021,txt:"Início de uma ultrapassagem."},{id:3130021,txt:"Início de manobra de marcha atrás."}], correct:2130021, hasImage:true },
+        { id:130022, q:"Que sinal devo fazer ao iniciar a ultrapassagem do veículo pesado que circula à minha frente?", opts:[{id:1130022,txt:"Sinal de mudança de direção à direita."},{id:2130022,txt:"Sinal de luzes."},{id:3130022,txt:"Sinal de mudança de direção à esquerda."}], correct:3130022, hasImage:true },
+        { id:130023, q:"Na via em que me encontro é permitido realizar a manobra de ultrapassagem pela direita?", opts:[{id:1130023,txt:"Sim, visto tratar-se de uma auto-estrada."},{id:2130023,txt:"Sim, caso o condutor da frente mude de direção à esquerda."},{id:3130023,txt:"Não, em circunstância alguma."}], correct:2130023, hasImage:true },
+        // PÁGINA 9
+        { id:130024, q:"A faixa de rodagem está dividida por uma linha descontínua. Estou corretamente posicionado se estiver a efectuar uma ultrapassagem.", opts:[{id:1130024,txt:"Certo."},{id:2130024,txt:"Errado."}], correct:1130024, hasImage:true },
+        { id:130025, q:"A faixa de rodagem está dividida por uma linha descontínua. Estou corretamente posicionado se:", opts:[{id:1130025,txt:"Pretender ultrapassar o veículo da frente."},{id:2130025,txt:"Estiver a efetuar uma ultrapassagem."},{id:3130025,txt:"Pretender estacionar do lado esquerdo da faixa de rodagem."}], correct:2130025, hasImage:true },
+        { id:130026, q:"Estou a ser corretamente ultrapassado?", opts:[{id:1130026,txt:"Sim, estou."},{id:2130026,txt:"Não, porque a realização da manobra pode provocar embaraço para o trânsito."},{id:3130026,txt:"Não, porque é proibido ultrapassar nas pontes."}], correct:2130026, hasImage:true },
+        { id:2329, q:"O dever de ceder a passagem é:", opts:[{id:12329,txt:"Do condutor do velocípede, porque conduz um veículo sem motor."},{id:22329,txt:"Meu, porque vou entrar numa rotunda."}], correct:22329, hasImage:true },
+        { id:2330, q:"O condutor do velocípede deve ceder a passagem?", opts:[{id:12330,txt:"Não, porque o velocípede circula na rotunda"},{id:22330,txt:"Sim, porque o velocípede se apresenta à minha esquerda."},{id:32330,txt:"Não, porque o velocípede é um veículo sem motor."}], correct:12330, hasImage:true },
+        { id:2992, q:"Como devo proceder ao entrar nesta rotunda?", opts:[{id:12992,txt:"Tenho prioridade de passagem em relação aos veículos que circulam na rotunda."},{id:22992,txt:"Devo ceder a passagem aos veículos que circulam na rotunda."}], correct:22992, hasImage:true },
+        // PÁGINA 10
+        { id:2993, q:"Ao circular numa rotunda devo saber que:", opts:[{id:12993,txt:"Os veículos em serviço de urgência tem prioridade ao entrar na rotunda."},{id:22993,txt:"Os veículos em serviço de urgência não tem prioridade ao entrar na rotunda."}], correct:22993, hasImage:true },
+        { id:3151, q:"Ao entrar nesta rotunda estou obrigado a ceder a passagem a uma escolta policial que nela circule?", opts:[{id:13151,txt:"Sim, sempre."},{id:23151,txt:"Sim, mas apenas se os veículos circularem em marcha de urgência."},{id:33151,txt:"Não, dado que me apresento à direita dos veículos da escolta."}], correct:13151, hasImage:true },
+        { id:3159, q:"Quem tem prioridade de passagem na rotunda?", opts:[{id:13159,txt:"O condutor do veículo de cor preta porque vai entrar na rotunda."},{id:23159,txt:"O condutor do veículo de cor cinzenta porque circula na rotunda."}], correct:23159, hasImage:true },
+        { id:3161, q:"Ao entrar nesta rotunda tenho prioridade de passagem?", opts:[{id:13161,txt:"Sim, mas apenas porque circulo dentro de uma localidade."},{id:23161,txt:"Não, exceto se circular fora de uma localidade."},{id:33161,txt:"Não."}], correct:33161, hasImage:true },
+        { id:3172, q:"O ciclista que circula nesta rotunda deve ceder a passagem a todos os veículos a motor que nela pretendam entrar?", opts:[{id:13172,txt:"Sim."},{id:23172,txt:"Sim, mas apenas aos veículos automóveis ligeiros e pesados."},{id:33172,txt:"Não."}], correct:33172, hasImage:true },
+        { id:3173, q:"Ao circular numa rotunda o condutor de um velocípede deve ceder a passagem:", opts:[{id:13173,txt:"A todos os veículos."},{id:23173,txt:"Apenas aos veículos a motor."},{id:33173,txt:"Apenas aos veículos que transitem em serviço de urgência."}], correct:23173, hasImage:true },
+        // PÁGINA 11
+        { id:3177, q:"Ao circular nesta rotunda, o condutor do velocípede:", opts:[{id:13177,txt:"Deve ceder a passagem a todos os veículos a motor."},{id:23177,txt:"Deve ceder a passagem aos veículos que circulem em serviço de urgência."}], correct:13177, hasImage:true },
+        { id:3183, q:"Em regra, ao circular numa rotunda, tenho prioridade de passagem sobre os veículos que nela pretendam entrar?", opts:[{id:13183,txt:"Sim."},{id:23183,txt:"Não."}], correct:13183, hasImage:true },
+        { id:3184, q:"Os condutores que circulam numa rotunda devem ceder a passagem aos que nela vão entrar.", opts:[{id:13184,txt:"A afirmação é verdadeira."},{id:23184,txt:"A afirmação é falsa."}], correct:23184, hasImage:true },
+        { id:3190, q:"Os veículos prioritários têm prioridade de passagem quando circulam numa rotunda?", opts:[{id:13190,txt:"Sim, têm sempre prioridade de passagem, mesmo que não transitem em missão urgente de socorro."},{id:23190,txt:"Não, apenas têm prioridade de passagem sobre os veículos sem motor."},{id:33190,txt:"Não, apenas têm prioridade se transitarem em missão urgente de socorro."}], correct:33190, hasImage:true },
+        { id:7692, q:"O veículo de duas rodas que transita na rotunda:", opts:[{id:17692,txt:"Deve parar obrigatoriamente para me ceder a passagem."},{id:27692,txt:"Não deve embaraçar o trânsito."},{id:37692,txt:"Deve ceder a passagem ao meu veículo."}], correct:27692, hasImage:true },
+        { id:8790, q:"O que devo fazer nesta situação?", opts:[{id:18790,txt:"Ceder a passagem ao veículo cinzento."},{id:28790,txt:"Avançar em primeiro lugar, porque me apresento pela direita."},{id:38790,txt:"Parar obrigatoriamente, porque pretendo entrar na rotunda."}], correct:18790, hasImage:true },
+        // PÁGINA 12
+        { id:8800, q:"Ao circular na rotunda:", opts:[{id:18800,txt:"Fico obrigado a ceder a passagem ao automóvel ligeiro."},{id:28800,txt:"Devo estar atento ao automóvel ligeiro."},{id:38800,txt:"Devo parar, para ceder a passagem ao automóvel ligeiro."}], correct:28800, hasImage:true },
+        { id:8880, q:"Um dos factores que deve influenciar a velocidade a que transito é a visibilidade do local.", opts:[{id:18880,txt:"Certo."},{id:28880,txt:"Errado."}], correct:18880, hasImage:true },
+        { id:8882, q:"Ao circular neste local devo:", opts:[{id:18882,txt:"Moderar a velocidade e parar se necessário."},{id:28882,txt:"Moderar a velocidade e utilizar os sinais sonoros."},{id:38882,txt:"Aumentar um pouco a velocidade para não ter necessidade de parar."}], correct:18882, hasImage:true },
+        { id:8883, q:"A velocidade neste local deve ser:", opts:[{id:18883,txt:"Obrigatoriamente de 50 Km/h."},{id:28883,txt:"A que cada condutor considerar adequada desde que não seja inferior a 50 Km/h."},{id:38883,txt:"Adaptada às condições existentes."}], correct:38883, hasImage:true },
+        { id:8888, q:"Neste local é obrigatório moderar a velocidade?", opts:[{id:18888,txt:"Sim porque as condições atmosféricas são desfavoráveis."},{id:28888,txt:"Sim, sempre."},{id:38888,txt:"Não nunca. Esse comportamento iria originar embaraço para o trânsito."}], correct:28888, hasImage:true },
+        // PÁGINA 13
+        { id:8889, q:"Nesta situação, a velocidade deve ser moderada. Devido ao local?", opts:[{id:18889,txt:"Sim, neste local é sempre obrigatório moderar a velocidade."},{id:28889,txt:"Não, devido às condições atmosféricas do momento."},{id:38889,txt:"Não, porque neste local nunca devo moderar a velocidade."}], correct:18889, hasImage:true },
+        { id:8893, q:"Nesta situação para além de moderar a velocidade, pode tornar-se necessário:", opts:[{id:18893,txt:"Ligar as luzes de estrada."},{id:28893,txt:"Ligar as luzes de cruzamento e as luzes de estrada em simultâneo."},{id:38893,txt:"Ligar as luzes de cruzamento."}], correct:38893, hasImage:true },
+        { id:8895, q:"Perante o sinal vertical:", opts:[{id:18895,txt:"A velocidade máxima permitida é de 100 km/h."},{id:28895,txt:"A velocidade mínima permitida é de 100 km/h."},{id:38895,txt:"A velocidade obrigatória é de 100 km/h."}], correct:28895, hasImage:true },
+        { id:8897, q:"Quando a aderência ao piso é menor a distância de paragem aumenta. Logo devo:", opts:[{id:18897,txt:"Diminuir a velocidade."},{id:28897,txt:"Manter a velocidade."},{id:38897,txt:"Aumentar a velocidade."}], correct:18897, hasImage:true },
+        { id:8898, q:"Neste momento, o piso está escorregadio, devo:", opts:[{id:18898,txt:"Ligar as luzes de cruzamento."},{id:28898,txt:"Aumentar a distância de segurança, adaptando a velocidade."},{id:38898,txt:"Diminuir a distância de segurança, moderando a velocidade."}], correct:28898, hasImage:true },
+        // PÁGINA 14
+        { id:8900, q:"Ao circular neste local, devo:", opts:[{id:18900,txt:"Aumentar a distância de segurança."},{id:28900,txt:"Aumentar a velocidade."},{id:38900,txt:"Aumentar a distância de paragem."}], correct:18900, hasImage:true },
+        { id:9153, q:"O que devo fazer relativamente ao veículo que segue à minha frente?", opts:[{id:19153,txt:"Manter uma distância que me permita parar em segurança."},{id:29153,txt:"Diminuir a distância de segurança."},{id:39153,txt:"Aumentar a distância de segurança, para iniciar a ultrapassagem."}], correct:19153, hasImage:true },
+        { id:9155, q:"O que devo fazer nesta situação?", opts:[{id:19155,txt:"Parar, porque circula um veículo em sentido contrário."},{id:29155,txt:"Fazer sinais de luzes se pretender ultrapassar."},{id:39155,txt:"Manter o veículo na mesma via de trânsito."}], correct:39155, hasImage:true },
+        { id:9156, q:"Quando a aderência ao piso é menor a velocidade deve ser moderada, porque:", opts:[{id:19156,txt:"A distância de paragem aumenta."},{id:29156,txt:"A distância de travagem diminui."},{id:39156,txt:"A distância de paragem diminui."}], correct:19156, hasImage:true },
+        { id:9160, q:"Quando o piso está escorregadio, devo utilizar o motor como auxiliar do travão?", opts:[{id:19160,txt:"Não, devo utilizar apenas o travão de serviço."},{id:29160,txt:"Sim e também devo evitar travagens bruscas."},{id:39160,txt:"Sim, apesar de ser mais seguro o travão de estacionamento."}], correct:29160, hasImage:true },
+        // PÁGINA 15
+        { id:9161, q:"Nesta situação, em que a aderência ao piso é reduzida, devo:", opts:[{id:19161,txt:"Manter a velocidade."},{id:29161,txt:"Reduzir a velocidade."},{id:39161,txt:"Aumentar a velocidade."}], correct:29161, hasImage:true },
+        { id:9162, q:"Quando a visibilidade é insuficiente, para além da utilização das luzes, devo:", opts:[{id:19162,txt:"Adaptar a velocidade."},{id:29162,txt:"Utilizar sempre os sinais sonoros."},{id:39162,txt:"Moderar a velocidade e utilizar os sinais sonoros."}], correct:19162, hasImage:true },
+        { id:9164, q:"O que devo fazer nesta situação?", opts:[{id:19164,txt:"Parar, porque a visibilidade do local é insuficiente."},{id:29164,txt:"Adaptar a velocidade às condições de visibilidade."},{id:39164,txt:"Aumentar a velocidade e se necessário ligar os máximos."}], correct:29164, hasImage:true },
+        { id:9165, q:"Nesta situação devo:", opts:[{id:19165,txt:"Moderar a velocidade."},{id:29165,txt:"Utilizar as luzes de estrada."},{id:39165,txt:"Aumentar a distância de segurança e utilizar as luzes de estrada."}], correct:19165, hasImage:true },
+        { id:9166, q:"Quando a intensidade de trânsito aumenta, a velocidade deve:", opts:[{id:19166,txt:"Diminuir."},{id:29166,txt:"Aumentar."},{id:39166,txt:"Diminuir, apenas se circular em auto-estrada."}], correct:19166, hasImage:true },
+        // PÁGINA 16
+        { id:9167, q:"Nesta situação, um dos principais aspectos a considerar é:", opts:[{id:19167,txt:"O dever de utilizar as luzes de estrada."},{id:29167,txt:"A proibição de circular com as luzes de cruzamento acesas."},{id:39167,txt:"Manter uma velocidade adequada."}], correct:39167, hasImage:true },
+        { id:130027, q:"Um dos fatores que deve influenciar a velocidade a que transito é a visibilidade do local.", opts:[{id:1130027,txt:"Certo."},{id:2130027,txt:"Errado."}], correct:1130027, hasImage:true },
+        { id:130028, q:"Neste local é obrigatório moderar a velocidade?", opts:[{id:1130028,txt:"Sim, porque as condições atmosféricas são desfavoráveis."},{id:2130028,txt:"Sim, sempre."},{id:3130028,txt:"Não, nunca. Esse comportamento iria originar embaraço para o trânsito."}], correct:2130028, hasImage:true },
+        { id:2255, q:"Ao circular nesta via pública, devo saber que:", opts:[{id:12255,txt:"No próximo entroncamento, estou obrigado a ceder a passagem apenas aos automóveis."},{id:22255,txt:"Tenho prioridade de passagem sobre os veículos sem motor que circulam na via que se aproxima."},{id:32255,txt:"Devo ceder a passagem a todos e quaisquer veículos que transitem na via que se aproxima."}], correct:32255, hasImage:true },
+        { id:2256, q:"Como devo proceder perante o sinal vertical de cedência de passagem?", opts:[{id:12256,txt:"Ceder a passagem apenas aos veículos vindos da direita."},{id:22256,txt:"Ceder a passagem apenas aos veículos vindos da esquerda."},{id:32256,txt:"Ceder a passagem a todos os veículos."}], correct:32256, hasImage:true },
+        { id:2257, q:"Na presença destes sinais verticais, sou sempre obrigado a parar o meu veículo. A afirmação é:", opts:[{id:12257,txt:"Verdadeira."},{id:22257,txt:"Falsa."}], correct:22257, hasImage:true },
+        // PÁGINA 17
+        { id:2258, q:"Como devo proceder face ao sinal vertical triangular?", opts:[{id:12258,txt:"Ceder a passagem aos veículos que se apresentem pela direita."},{id:22258,txt:"Ceder a passagem a todos os veículos."},{id:32258,txt:"Avançar com cuidado, apesar de ter prioridade de passagem."}], correct:22258, hasImage:true },
+        { id:2259, q:"O que significa o sinal vertical triangular?", opts:[{id:12259,txt:"Entroncamento com via com prioridade."},{id:22259,txt:"Cruzamento com via sem prioridade."},{id:32259,txt:"Cruzamento com via com prioridade."}], correct:32259, hasImage:true },
+        { id:2260, q:"Como devo proceder no entroncamento de que me aproximo?", opts:[{id:12260,txt:"Ceder a passagem aos veículos que se apresentem pela direita."},{id:22260,txt:"Ceder a passagem a todos os veículos motorizados."},{id:32260,txt:"Avançar, verificando se os condutores que circulam na via com que me cruzo me cedem a passagem."},{id:42260,txt:"Avançar sem precauções dado ter o direito de passar em primeiro lugar."}], correct:32260, hasImage:true },
+        { id:2261, q:"Perante o sinal vertical de forma triangular sei que no próximo entroncamento devo ceder a passagem aos veículos que se apresentem pela direita.", opts:[{id:12261,txt:"A afirmação é verdadeira."},{id:22261,txt:"A afirmação é falsa."}], correct:22261, hasImage:true },
+        { id:2262, q:"Qual o significado do sinal de cedência de passagem?", opts:[{id:12262,txt:"Obrigatoriedade de ceder a passagem aos veículos que entram na rotunda."},{id:22262,txt:"Aproximação de rotunda onde o trânsito se processa em sentido giratório."},{id:32262,txt:"Aproximação de praça onde a velocidade é limitada a 70 km/h."}], correct:22262, hasImage:true },
+        // PÁGINA 18
+        { id:2263, q:"O que significa o sinal vertical?", opts:[{id:12263,txt:"Entrada numa zona em que apenas o estacionamento é proibido."},{id:22263,txt:"Entrada numa zona em que apenas a paragem é proibida."},{id:32263,txt:"Entrada numa zona em que a paragem e o estacionamento são proibidos."}], correct:32263, hasImage:true },
+        { id:2264, q:"O sinal que se encontra na via pública:", opts:[{id:12264,txt:"Proíbe apenas o estacionamento a veículos pesados de mercadorias."},{id:22264,txt:"Proíbe apenas a paragem a todos os veículos."},{id:32264,txt:"Proíbe a paragem e o estacionamento."}], correct:32264, hasImage:true },
+        { id:2265, q:"O sinal vertical indica-me que:", opts:[{id:12265,txt:"O trânsito passa a fazer-se apenas num sentido."},{id:22265,txt:"A via pública passa a ter trânsito nos dois sentidos."},{id:32265,txt:"Não tenho prioridade no próximo estreitamento da faixa de rodagem."}], correct:32265, hasImage:true },
+        { id:2266, q:"Como devo proceder perante o sinal vertical?", opts:[{id:12266,txt:"Manter a velocidade porque o trânsito passa a fazer-se apenas num só sentido."},{id:22266,txt:"Moderar a velocidade porque a circulação passa a ser feita nos dois sentidos."},{id:32266,txt:"Manter a velocidade porque tenho prioridade no próximo estreitamento da via pública."}], correct:22266, hasImage:true },
+        { id:2268, q:"Perante o sinal vertical devo saber que:", opts:[{id:12268,txt:"O trânsito apenas se faz num só sentido."},{id:22268,txt:"Aproxima-se uma curva perigosa à esquerda."},{id:32268,txt:"Tenho prioridade de passagem no próximo entroncamento ou cruzamento."}], correct:32268, hasImage:true },
+    // PÁGINA 19
+        { id:2271, q:"De acordo com a sinalização vertical, devem ceder a passagem os condutores que circulam na via de trânsito:", opts:[{id:12271,txt:"Da esquerda."},{id:22271,txt:"Do centro."},{id:32271,txt:"Da direita."}], correct:32271, hasImage:true },
+        { id:5062, q:"O sinal vertical indica:", opts:[{id:15062,txt:"Obrigação de seguir em frente na próxima intersecção."},{id:25062,txt:"Via com uma só fila de trânsito."},{id:35062,txt:"Via com trânsito de sentido único."}], correct:35062, hasImage:true },
+        { id:6121, q:"O sinal colocado mais à direita é de:", opts:[{id:16121,txt:"Indicação."},{id:26121,txt:"Obrigação."},{id:36121,txt:"Perigo."}], correct:16121, hasImage:true },
+        { id:6137, q:"Este sinal indica que a 300 metros existe:", opts:[{id:16137,txt:"Um telefone de utilização pública."},{id:26137,txt:"Um telefone para utilização em caso de emergência."},{id:36137,txt:"Uma área de serviço."}], correct:26137, hasImage:true },
+        { id:6139, q:"O telefone disponível nesta via deve ser utilizado:", opts:[{id:16139,txt:"Em caso de acidente ou avaria."},{id:26139,txt:"Em qualquer situação."},{id:36139,txt:"Quando existe congestionamento de trânsito."}], correct:16139, hasImage:true },
+        // PÁGINA 20
+        { id:6140, q:"Este sinal é de:", opts:[{id:16140,txt:"Pré-sinalização."},{id:26140,txt:"Indicação."},{id:36140,txt:"Perigo."}], correct:16140, hasImage:true },
+        { id:6144, q:"O sinal de Informação indica:", opts:[{id:16144,txt:"Oficina de reparações de caravanas."},{id:26144,txt:"Entreposto comercial de campismo e reboques de campismo."},{id:36144,txt:"Parque misto para campismo e reboques de campismo."}], correct:36144, hasImage:true },
+        { id:130029, q:"O sinal vertical indica:", opts:[{id:1130029,txt:"Obrigação de seguir em frente na próxima interseção."},{id:2130029,txt:"Via com uma só fila de trânsito."},{id:3130029,txt:"Via com trânsito de sentido único."}], correct:3130029, hasImage:true },
+        { id:707, q:"Devo ceder a passagem?", opts:[{id:10707,txt:"Sim, porque aquele veículo se apresenta pela direita."},{id:20707,txt:"Não, porque sai de uma propriedade."}], correct:20707, hasImage:true },
+        { id:769, q:"Perante este sinal devo:", opts:[{id:10769,txt:"Avançar em primeiro lugar."},{id:20769,txt:"Ceder a passagem."}], correct:20769, hasImage:true },
+        { id:964, q:"Nesta interseção pretendo seguir em frente.", opts:[{id:10964,txt:"Posso avançar."},{id:20964,txt:"Devo ceder a passagem ao veículo de tracção animal."},{id:30964,txt:"Posso avançar, depois de ceder a passagem ao motociclo."}], correct:20964, hasImage:true },
+        // PÁGINA 21
+        { id:976, q:"Pretendo mudar de direcção à direita. Devo ceder passagem?", opts:[{id:10976,txt:"Sim."},{id:20976,txt:"Não."}], correct:10976, hasImage:true },
+        { id:992, q:"Posso avançar:", opts:[{id:10992,txt:"Antes do velocípede, mas depois de ceder a passagem ao veículo de tracção animal."},{id:20992,txt:"Em simultâneo com o veículo de tracção animal."},{id:30992,txt:"Antes do velocípede e do veículo de tracção animal."}], correct:10992, hasImage:true },
+        { id:994, q:"Qual deve ser a ordem de passagem nesta interseção?", opts:[{id:10994,txt:"Ambulância, veículo pesado, veículo verde e por último o meu veículo."},{id:20994,txt:"Ambulância, o meu veículo, o veículo verde e por último o veículo pesado."}], correct:20994, hasImage:true },
+        { id:998, q:"Qualquer veículo que saia de uma passagem de nível:", opts:[{id:10998,txt:"Não tem que ceder passagem."},{id:20998,txt:"Deve ceder passagem."}], correct:20998, hasImage:true },
+        { id:1002, q:"Perante esta situação em que o veículo da direita sai de um parque de estacionamento, o que devo fazer?", opts:[{id:11002,txt:"Avançar."},{id:21002,txt:"Parar."},{id:31002,txt:"Ceder passagem."}], correct:21002, hasImage:true },
+        { id:1007, q:"Ao sair de um prédio particular:", opts:[{id:11007,txt:"Devo ceder a passagem aos veículos sem motor."},{id:21007,txt:"Devo ceder a passagem só aos veículos a motor."},{id:31007,txt:"Posso avançar."}], correct:11007, hasImage:true },
+        // PÁGINA 22
+        { id:1008, q:"Nesta situação em que saio de um prédio particular:", opts:[{id:11008,txt:"Posso avançar, porque o outro veículo não tem motor."},{id:21008,txt:"Devo parar."},{id:31008,txt:"Devo ceder a passagem ao velocípede."}], correct:31008, hasImage:true },
+        { id:1009, q:"Perante este sinal devo ceder passagem:", opts:[{id:11009,txt:"Só aos veículos que se apresentam pela direita."},{id:21009,txt:"Só aos veículos com motor que se apresentem pela direita."},{id:31009,txt:"A todos os veículos que circulem na via de que me aproximo."}], correct:31009, hasImage:true },
+        { id:1076, q:"Nesta situação devo:", opts:[{id:11076,txt:"Prosseguir a marcha, com precaução."},{id:21076,txt:"Ceder a passagem porque o veículo sai de um caminho particular."}], correct:21076, hasImage:true },
+        { id:1077, q:"Devido à impossibilidade de cruzamento de automóveis, devo:", opts:[{id:11077,txt:"Prosseguir normalmente a marcha."},{id:21077,txt:"Parar e ceder a passagem ao automóvel pesado."},{id:31077,txt:"Passar o mais rapidamente possível."}], correct:21077, hasImage:true },
+        { id:1078, q:"Nesta situação, circulando o outro veículo em sentido oposto, posso prosseguir a marcha?", opts:[{id:11078,txt:"Não, devo reduzir a velocidade e ceder a passagem."},{id:21078,txt:"Sim, o outro condutor deve ceder-me a passagem."},{id:31078,txt:"Sim, porque desço."}], correct:11078, hasImage:true },
+        // PÁGINA 23
+        { id:1079, q:"Posso passar:", opts:[{id:11079,txt:"Depois do veículo da direita e antes do velocípede."},{id:21079,txt:"Depois do velocípede e antes do veículo da direita."},{id:31079,txt:"Depois de ceder a passagem a todos os veículos."}], correct:11079, hasImage:true },
+        { id:1080, q:"Nesta situação:", opts:[{id:11080,txt:"Devo reduzir a velocidade e ceder a passagem ao condutor da frente."},{id:21080,txt:"Posso prosseguir, pois o condutor da frente tem o dever de me ceder a passagem."},{id:31080,txt:"Devo buzinar, para o informar que lhe estou a ceder a passagem."}], correct:11080, hasImage:true },
+        { id:1081, q:"Pretendo seguir em frente.", opts:[{id:11081,txt:"Devo ceder a passagem ao veículo da frente, porque está a dificultar a circulação."},{id:21081,txt:"Devo ceder a passagem ao veículo da frente, porque vai mudar de direcção."},{id:31081,txt:"Posso prosseguir a marcha."}], correct:31081, hasImage:true },
+        { id:1175, q:"Neste cruzamento, avanço:", opts:[{id:11175,txt:"Antes dos outros dois veículos."},{id:21175,txt:"Depois dos outros dois veículos."},{id:31175,txt:"Depois do veículo ligeiro e antes do velocípede."}], correct:21175, hasImage:true },
+        { id:1358, q:"Ao encontrar este sinal, como devo proceder?", opts:[{id:11358,txt:"Ceder a passagem a todos os veículos que circulem na via em que vou entrar."},{id:21358,txt:"Ceder a passagem apenas aos veículos vindos da direita."},{id:31358,txt:"Ceder a passagem apenas aos veículos vindos da esquerda."}], correct:11358, hasImage:true },
+        // PÁGINA 24
+        { id:1428, q:"Nesta situação, devo:", opts:[{id:11428,txt:"Ceder a passagem."},{id:21428,txt:"Passar em primeiro lugar."},{id:31428,txt:"Parar."}], correct:11428, hasImage:true },
+        { id:130030, q:"Nesta interseção pretendo seguir em frente.", opts:[{id:1130030,txt:"Posso avançar."},{id:2130030,txt:"Devo ceder a passagem ao veículo de tração animal."},{id:3130030,txt:"Posso avançar, depois de ceder a passagem ao motociclo."}], correct:2130030, hasImage:true },
+        { id:130031, q:"Um condutor ecológico deve:", opts:[{id:1130031,txt:"Evitar colocar muita bagagem no porta bagagens."},{id:2130031,txt:"Evitar conduzir veículos com motores híbridos."},{id:3130031,txt:"Evitar usar o ar condicionado do veículo, especialmente em percursos curtos."},{id:4130031,txt:"As afirmações de R:1 e R:3 estão corretas."}], correct:4130031, hasImage:false },
+        { id:133326, q:"Uma das formas de praticar uma condução mais ecológica é:", opts:[{id:1133326,txt:"Verificar regularmente a pressão dos pneus."},{id:2133326,txt:"Não conduzir com pesos desnecessários no veículo."},{id:3133326,txt:"Conduzir com o veículo desembraiado nas descidas íngremes."},{id:4133326,txt:"As afirmações de R:1 e R:2 estão corretas."}], correct:4133326, hasImage:false },
+        { id:133327, q:"O condutor contribui para uma maior proteção do ambiente:", opts:[{id:1133327,txt:"Utilizando o ar condicionado só em situações de necessidade."},{id:2133327,txt:"Usando sempre a relação de caixa de velocidades o mais alto possível, independentemente da velocidade a que circular."},{id:3133327,txt:"Fazendo uso de acessórios que provoquem o aumento da resistência aerodinâmica do veículo."}], correct:1133327, hasImage:false },
+        // PÁGINA 25
+        { id:133328, q:"Quais são os benefícios da prática generalizada da eco condução?", opts:[{id:1133328,txt:"Contribui para o aumento da emissão de gases com efeito de estufa para o arrefecimento global da atmosfera."},{id:2133328,txt:"Leva a um aumento significativo do número de veículos em circulação."},{id:3133328,txt:"Contribui para o aumento do uso de energias renováveis no uso dos transportes rodoviários."}], correct:3133328, hasImage:false },
+        { id:133329, q:"Um condutor que apresente resultado positivo no exame de pesquisa de álcool no ar expirado, mediante a utilização de aparelho aprovado para o efeito, fica impedido de conduzir pelo período de:", opts:[{id:1133329,txt:"6 horas."},{id:2133329,txt:"8 horas."},{id:3133329,txt:"12 horas."}], correct:1133329, hasImage:false },
+        { id:133330, q:"Um condutor ecológico deve:", opts:[{id:1133330,txt:"Evitar colocar muita bagagem no porta bagagens."},{id:2133330,txt:"Evitar conduzir veículos com motores híbridos."},{id:3133330,txt:"Evitar usar o ar condicionado do veículo, especialmente em percursos curtos."},{id:4133330,txt:"As afirmações de R:1 e R:3 estão corretas."}], correct:4133330, hasImage:false },
+        { id:133331, q:"Um aumento de 10% na velocidade pode provocar um aumento de 15% no consumo de combustível.", opts:[{id:1133331,txt:"A afirmação é verdadeira."},{id:2133331,txt:"A afirmação é falsa."}], correct:1133331, hasImage:false },
+        { id:133332, q:"A eco condução é uma forma de condução eficiente, menos poluente e mais segura.", opts:[{id:1133332,txt:"A afirmação é verdadeira."},{id:2133332,txt:"A afirmação é falsa."}], correct:1133332, hasImage:false },
+        // PÁGINA 26
+        { id:133333, q:"Quais são as vantagens da prática de uma eco condução?", opts:[{id:1133333,txt:"Contribui para a diminuição do nível de dióxido de carbono na atmosfera e de outros gases com efeito de estufa."},{id:2133333,txt:"Aumenta o conforto dos ocupantes do veículo."},{id:3133333,txt:"Contribui para uma menor poluição sonora."},{id:4133333,txt:"Todas as afirmações anteriores são verdadeiras."}], correct:4133333, hasImage:false },
+        { id:133334, q:"A prática da eco condução contribui para:", opts:[{id:1133344,txt:"A otimização do consumo de combustível e a redução da poluição ambiental."},{id:2133344,txt:"O aumento da sinistralidade rodoviária, embora possa causar embaraço no trânsito."},{id:3133344,txt:"Um melhor planeamento das viagens, de forma a evitar os congestionamentos de trânsito."},{id:4133344,txt:"As afirmações de R1 e R3 estão corretas."}], correct:4133344, hasImage:false },
+        { id:133335, q:"Um condutor faz uma condução ecológica, se ao conduzir a uma determinada velocidade:", opts:[{id:1133355,txt:"Utilizar uma rotação constante do motor, engrenando a mudança adequada a esta rotação."},{id:2133355,txt:"Utilizar uma rotação do motor alta, engrenando mudanças mais baixas."},{id:3133355,txt:"Utilizar uma rotação do motor baixa, engrenando mudanças mais altas."}], correct:3133355, hasImage:false },
+        { id:133336, q:"Como deve proceder o condutor em descidas de inclinação acentuada?", opts:[{id:1133366,txt:"Deve colocar o veículo em ponto morto, de forma a manter o motor liberto."},{id:2133366,txt:"Deve manter o veículo engrenado numa mudança compatível, ajudando a travagem com o motor."},{id:3133366,txt:"Nenhuma das afirmações está correta."}], correct:2133366, hasImage:false },
+        { id:133337, q:"A prática da eco condução também contribui para a diminuição da sinistralidade rodoviária?", opts:[{id:1133377,txt:"Sim, contribui."},{id:2133377,txt:"Não, apenas contribui para a redução do consumo de combustível e da poluição ambiental."},{id:3133377,txt:"Não, apenas contribui para a diminuição das emissões de gases com efeito de estufa."}], correct:1133377, hasImage:false },
+        // PÁGINA 27
+        { id:133338, q:"O que é o consumo médio de um veículo?", opts:[{id:1133338,txt:"É o volume final consumido, em litros, após percorrida uma certa distância."},{id:2133338,txt:"É o volume de combustível, em litros, dividido pela distância percorrida, em km."},{id:3133338,txt:"É a medida do consumo num determinado instante de tempo."}], correct:2133338, hasImage:false },
+        { id:133339, q:"Para que serve o conta-rotações?", opts:[{id:1133339,txt:"Para controlar a velocidade do motor."},{id:2133339,txt:"Para indicar a rotação do motor do veículo."},{id:3133339,txt:"Ambas as afirmações são verdadeiras."}], correct:3133339, hasImage:false },
+        { id:133340, q:"A correta pressão dos pneus contribui para uma condução mais económica?", opts:[{id:1133340,txt:"Sim, contribui."},{id:2133340,txt:"Não, apenas contribui para uma melhor estabilidade do veículo."},{id:3133340,txt:"Não, apenas contribui para a manutenção do sistema de suspensão do veículo."}], correct:1133340, hasImage:false },
+        { id:133341, q:"Entende-se por 'condução defensiva':", opts:[{id:1133341,txt:"Não efetuar ultrapassagens em vias com duas vias de trânsito."},{id:2133341,txt:"Conduzir de forma a prevenir, evitar e não provocar acidentes, sejam quais forem as condições de circulação, da via, do veículo e meteorológicas, e quaisquer que sejam os comportamentos dos outros utentes da via."},{id:3133341,txt:"Efetuar constantes travagens."}], correct:2133341, hasImage:false },
+        { id:133342, q:"O veículo deve ser apreendido numa ação de fiscalização, sempre que:", opts:[{id:1133342,txt:"Sejam desrespeitadas as regras relativas à poluição sonora do solo e do ar."},{id:2133342,txt:"Não tenha sido efetuado o seguro de responsabilidade civil nos termos da lei."},{id:3133342,txt:"Se suspeite de viciação fraudulenta no documento de identificação do veículo."}], correct:2133342, hasImage:false },
+        // PÁGINA 28
+        { id:133343, q:"A segurança rodoviária depende:", opts:[{id:1133343,txt:"Exclusivamente da sinalização."},{id:2133343,txt:"Unicamente do comportamento do utente, enquanto peão."},{id:3133343,txt:"Do equilíbrio que deve existir entre vários elementos que fazem parte do sistema de circulação."}], correct:3133343, hasImage:false },
+        { id:133344, q:"O acidente continua a ter como principal causa:", opts:[{id:1133344,txt:"A má sinalização de obras na via pública."},{id:2133344,txt:"A falha humana, pela não adaptação às condições do ambiente rodoviário."},{id:3133344,txt:"Os limites de velocidade impostos quando existem obras no pavimento."}], correct:2133344, hasImage:false },
+        { id:133345, q:"A avaliação que cada condutor faz de uma situação, depende muito da sua experiência na condução.", opts:[{id:1133345,txt:"Certo."},{id:2133345,txt:"Errado."}], correct:1133345, hasImage:false },
+        { id:133346, q:"Se aumentar a velocidade, a distância de segurança, deve:", opts:[{id:1133346,txt:"Aumentar."},{id:2133346,txt:"Diminuir."},{id:3133346,txt:"Manter-se."}], correct:1133346, hasImage:false },
+        { id:133348, q:"Conduzir com chuva tem como resultado:", opts:[{id:1133348,txt:"O aumento de aderência ao piso."},{id:2133348,txt:"A diminuição da distância de paragem."},{id:3133348,txt:"A redução da visibilidade."}], correct:3133348, hasImage:false },
+        // PÁGINA 29
+        { id:133349, q:"A condução sob a influência do álcool provoca no condutor:", opts:[{id:1133349,txt:"O aumento do tempo de reação."},{id:2133349,txt:"A diminuição do tempo de reação."},{id:3133349,txt:"O aumento dos seus reflexos."}], correct:1133349, hasImage:false },
+        { id:133350, q:"A capacidade de prever e antecipar enquanto condutor defensivo aumenta:", opts:[{id:1133350,txt:"Com a idade."},{id:2133350,txt:"Com a experiência de condução."}], correct:2133350, hasImage:false },
+        { id:133351, q:"Dos seguintes fatores, qual considera mais importante na prevenção de acidentes rodoviários?", opts:[{id:1133351,txt:"Ter um automóvel novo."},{id:2133351,txt:"Obter a carta de condução em idade avançada."},{id:3133351,txt:"Praticar uma condução defensiva."}], correct:3133351, hasImage:false },
+        { id:133352, q:"Se a velocidade aumentar, a distância de segurança:", opts:[{id:1133352,txt:"Não se altera."},{id:2133352,txt:"Deve ser menor."},{id:3133352,txt:"Deve também aumentar."}], correct:3133352, hasImage:false },
+        { id:133353, q:"Um dos efeitos da fadiga na condução traduz-se na diminuição:", opts:[{id:1133353,txt:"Da rapidez dos reflexos."},{id:2133353,txt:"Do tempo de reação."},{id:3133353,txt:"Da distância de paragem."}], correct:1133353, hasImage:false },
+        // PÁGINA 30
+        { id:133354, q:"Numa viagem longa, para evitar a fadiga, é aconselhável:", opts:[{id:1133354,txt:"Fumar e ouvir música muito alta."},{id:2133354,txt:"Parar, sair do veículo e descansar."},{id:3133354,txt:"Aumentar a velocidade."}], correct:2133354, hasImage:false },
+        { id:133355, q:"Numa viagem longa é aconselhável o condutor descansar:", opts:[{id:1133355,txt:"Apenas de 5 em 5 horas."},{id:2133355,txt:"De 2 em 2 horas."},{id:3133355,txt:"Só depois de ter percorrido os primeiros 500 km."}], correct:2133355, hasImage:false },
+        { id:133356, q:"Regra geral, um condutor distraído tem:", opts:[{id:1133356,txt:"Um tempo de reação mais reduzido."},{id:2133356,txt:"Um tempo de reação mais longo."},{id:3133356,txt:"O mesmo tempo de reação que qualquer outro condutor."}], correct:2133356, hasImage:false },
+        { id:133357, q:"A ingestão de bebidas alcoólicas:", opts:[{id:1133357,txt:"Diminui o campo visual."},{id:2133357,txt:"Alarga o campo visual."},{id:3133357,txt:"Não afeta o campo visual."}], correct:1133357, hasImage:false },
+        { id:133358, q:"Após ingerir bebidas alcoólicas, os obstáculos que o condutor avista à sua frente na via pública, parecem-lhe:", opts:[{id:1133358,txt:"Mais próximos."},{id:2133358,txt:"Mais longe."},{id:3133358,txt:"À distância real."}], correct:2133358, hasImage:false },
+        // PÁGINA 31
+        { id:133359, q:"Dos seguintes combustíveis, qual é o menos poluente?", opts:[{id:1133359,txt:"Gasolina sem chumbo."},{id:2133359,txt:"Gás."},{id:3133359,txt:"Gasolina com chumbo."}], correct:2133359, hasImage:false },
+        { id:130032, q:"Qual é a idade máxima permitida para veículos utilizados no serviço TVDE?", opts:[{id:1130032,txt:"5 anos"},{id:2130032,txt:"7 anos"},{id:3130032,txt:"10 anos"}], correct:2130032, hasImage:false },
+        { id:130033, q:"Para se tornar motorista TVDE, tem que ter carta de condução da categoria B há mais de:", opts:[{id:1130033,txt:"1 ano"},{id:2130033,txt:"2 anos"},{id:3130033,txt:"3 anos"}], correct:3130033, hasImage:false },
+        { id:130034, q:"Os motoristas TVDE estão autorizados a recolher passageiros diretamente na via pública?", opts:[{id:1130034,txt:"Sim, em qualquer situação"},{id:2130034,txt:"Não, apenas mediante reserva na plataforma eletrónica"},{id:3130034,txt:"Sim, exceto em praças de táxis"}], correct:2130034, hasImage:false },
+        { id:130035, q:"Os veículos TVDE podem ter publicidade no exterior?", opts:[{id:1130035,txt:"Sim, sem restrições"},{id:2130035,txt:"Sim, desde que seja aprovada pelo IMT"},{id:3130035,txt:"Não, é proibido"}], correct:2130035, hasImage:false },
+        // PÁGINA 32
+        { id:130036, q:"Qual é o tempo máximo de condução permitido para motoristas TVDE num período de 24 horas?", opts:[{id:1130036,txt:"8 horas"},{id:2130036,txt:"10 horas"},{id:3130036,txt:"12 horas"}], correct:2130036, hasImage:false },
+        { id:130038, q:"Em que situação é permitido utilizar veículos com matrícula estrangeira no serviço TVDE?", opts:[{id:1130038,txt:"Em nenhum caso"},{id:2130038,txt:"Somente para viagens internacionais"},{id:3130038,txt:"Com autorização do IMT"}], correct:1130038, hasImage:false },
+        { id:130040, q:"Qual destes requisitos é obrigatório para obter o certificado de motorista TVDE?", opts:[{id:1130040,txt:"Frequência de um curso de formação rodoviária específico"},{id:2130040,txt:"Possuir seguro automóvel"},{id:3130040,txt:"Participação em seminários de segurança"}], correct:1130040, hasImage:false },
+        { id:130042, q:"Quem é responsável pela fiscalização do cumprimento das normas no serviço TVDE?", opts:[{id:1130042,txt:"GNR e IMT"},{id:2130042,txt:"PSP, GNR e IMT"},{id:3130042,txt:"GNR e PSP"}], correct:2130042, hasImage:false },
+        { id:130043, q:"Qual é a duração mínima do curso de formação inicial rodoviária para motoristas TVDE?", opts:[{id:1130043,txt:"20 horas"},{id:2130043,txt:"30 horas"},{id:3130043,txt:"50 horas"}], correct:3130043, hasImage:false },
+        // PÁGINA 33
+        { id:130044, q:"Qual é o tempo máximo permitido para veículos TVDE operarem antes de passar por uma inspeção técnica?", opts:[{id:1130044,txt:"1 ano após a matrícula e, depois, anualmente"},{id:2130044,txt:"2 anos após a matrícula e, depois, bienalmente"},{id:3130044,txt:"Apenas no prazo estipulado pelo IMT"}], correct:1130044, hasImage:false },
+        { id:130045, q:"A via reservada a veículos de transporte público, por veículos TVDE é:", opts:[{id:1130045,txt:"Permitido em vias de trânsito rápidas"},{id:2130045,txt:"Proibida a circulação"},{id:3130045,txt:"Permitido apenas em algumas cidades"}], correct:2130045, hasImage:false },
+        { id:130046, q:"Para ser motorista de TVDE tenho de ter carta de condução da categoria B há mais de 3 anos.", opts:[{id:1130046,txt:"Falso"},{id:2130046,txt:"Verdadeiro"}], correct:2130046, hasImage:false },
+        { id:130047, q:"Os motoristas TVDE podem recolher passageiros diretamente na via pública sem reserva prévia.", opts:[{id:1130047,txt:"Falso"},{id:2130047,txt:"Verdadeiro"}], correct:1130047, hasImage:false },
+        { id:130048, q:"Os veículos utilizados no serviço TVDE devem ter idade inferior a 7 anos a partir da primeira matrícula.", opts:[{id:1130048,txt:"Falso"},{id:2130048,txt:"Verdadeiro"}], correct:2130048, hasImage:false },
+        { id:130049, q:"O certificado de motorista TVDE é válido por 10 anos.", opts:[{id:1130049,txt:"Falso"},{id:2130049,txt:"Verdadeiro"}], correct:1130049, hasImage:false },
+        // PÁGINA 34
+        { id:130050, q:"É permitido ter publicidade no exterior dos veículos TVDE, desde que aprovada pelo IMT.", opts:[{id:1130050,txt:"Falso"},{id:2130050,txt:"Verdadeiro"}], correct:2130050, hasImage:false },
+        { id:130052, q:"Veículos usados no serviço TVDE podem ser de matrícula estrangeira, desde que sejam autorizados pelo IMT.", opts:[{id:1130052,txt:"Falso"},{id:2130052,txt:"Verdadeiro"}], correct:1130052, hasImage:false },
+        { id:130053, q:"Motoristas TVDE devem possuir um curso de formação rodoviária inicial de 50 horas para exercerem a atividade.", opts:[{id:1130053,txt:"Verdadeiro"},{id:2130053,txt:"Falso"}], correct:1130053, hasImage:false },
+        { id:130055, q:"O serviço de TVDE só pode ser contratado através de plataforma eletrónica:", opts:[{id:1130055,txt:"Verdadeiro"},{id:2130055,txt:"Falso"}], correct:1130055, hasImage:false },
+        { id:130056, q:"As regras gerais de atuação em caso de acidente são:", opts:[{id:1130056,txt:"Sinalizar o veículo, alertar as autoridades e parar o motor do veículo"},{id:2130056,txt:"Alertar as autoridades, sinalizar o veículo e parar o veículo"},{id:3130056,txt:"Parar o motor do veículo, sinalizar o veículo e alertar as autoridades"},{id:4130056,txt:"Nenhuma das respostas anteriores está correta"}], correct:3130056, hasImage:false },
+        { id:130057, q:"Fogo é uma reação química:", opts:[{id:1130057,txt:"Que ocorre num determinado local, sempre que o calor seja em excesso"},{id:2130057,txt:"Entre o combustível e o oxigénio do ar (comburente), face a uma fonte de calor"},{id:3130057,txt:"Provocada por uma fonte de energia"},{id:4130057,txt:"Que ocorre em determinados materiais provocado pelo aumento da temperatura"}], correct:2130057, hasImage:false },
+        // PÁGINA 35
+        { id:130058, q:"Perante uma ferida simples numa zona sem fraturas:", opts:[{id:1130058,txt:"O melhor método é fazer compressão direta"},{id:2130058,txt:"Deve-se aplicar sempre um garrote"},{id:3130058,txt:"Deve-se ligar imediatamente 112 e não fazer nada"},{id:4130058,txt:"Uma hemorragia não é grave e por isso não é necessário fazer nada"}], correct:1130058, hasImage:false },
+        { id:130059, q:"Numa situação de queimadura, os cuidados de emergência visam:", opts:[{id:1130059,txt:"Aliviar a dor"},{id:2130059,txt:"Prevenir o choque"},{id:3130059,txt:"Prevenir a infecção"},{id:4130059,txt:"Todas as respostas anteriores estão corretas"}], correct:4130059, hasImage:false },
+        { id:130060, q:"Em caso de incêndio, um motorista:", opts:[{id:1130060,txt:"Tem de conseguir extinguir o incêndio antes de garantir a evacuação dos ocupantes do veículo"},{id:2130060,txt:"Não deve parar, exceto se o incêndio for no motor"},{id:3130060,txt:"Deve garantir a evacuação dos ocupantes do veículo para uma zona segura"},{id:4130060,txt:"Todas as respostas anteriores estão corretas"}], correct:3130060, hasImage:false },
+        { id:130061, q:"Em caso de tentativa de agressão ou agressão ao motorista:", opts:[{id:1130061,txt:"Não deve ser contatada a autoridade para evitar problemas"},{id:2130061,txt:"Deve adotar-se uma atitude de confronto"},{id:3130061,txt:"Os atos do motorista devem basear-se em evitar sempre o confronto"},{id:4130061,txt:"O motorista deve reagir violentamente e se possível imobilizar o agressor"}], correct:3130061, hasImage:false },
+        { id:130062, q:"Um condutor que assista a um acidente no qual existam pessoas ou haja veículos danificados tem o dever de prestar o auxílio. Indique o comportamento que não deve ser adotado:", opts:[{id:1130062,txt:"Antes de sair do veículo para prestar auxílio, deve assegurar-se de que o próprio, os seus passageiros e o seu veículo estão em segurança"},{id:2130062,txt:"Manter a calma"},{id:3130062,txt:"Descrever corretamente qual a situação e responder às perguntas que a central de emergência faz"},{id:4130062,txt:"Não desligar a ignição dos veículos acidentados"}], correct:4130062, hasImage:false },
+        // PÁGINA 36 e 37
+        { id:130063, q:"Em caso de acidente com a sua viatura, qual o procedimento que não deve ser adotado:", opts:[{id:1130063,txt:"Manter a calma"},{id:2130063,txt:"Avaliar a segurança do local"},{id:3130063,txt:"Efetuar uma rápida avaliação da vítima"},{id:4130063,txt:"Abandonar o local"}], correct:4130063, hasImage:false },
+        { id:130064, q:"Quando ocorre um incêndio num veículo, o motorista deve adotar certos procedimentos. Das seguintes hipóteses, qual é aquela que não deve ser adotada:", opts:[{id:1130064,txt:"Ligar os 4 indicadores de mudança de direcção"},{id:2130064,txt:"Encostar à berma"},{id:3130064,txt:"Chamar socorro"},{id:4130064,txt:"Manter o veículo em funcionamento"}], correct:4130064, hasImage:false },
+        { id:130065, q:"No contexto do transporte rodoviário os riscos de agressão e violência aos motoristas e respetivos veículos tem vindo a aumentar. Em situações de agressão deve:", opts:[{id:1130065,txt:"Tentar prever potenciais situações de conflito e identificar potenciais agressores"},{id:2130065,txt:"Saber controlar as emoções e tomar decisões"},{id:3130065,txt:"Saber identificar potenciais agressores perante a autoridade"},{id:4130065,txt:"Tentar prever potenciais situações de conflito e identificar potenciais agressores, assim como controlar as emoções e tomar decisões"}], correct:4130065, hasImage:false },
+        { id:131859, q:"As regras gerais de atuação em caso de acidente são:", opts:[{id:1131859,txt:"Sinalizar o veículo, alertar as autoridades e parar o motor do veículo"},{id:2131859,txt:"Alertar as autoridades, sinalizar o veículo e parar o veículo"},{id:3131859,txt:"Parar o motor do veículo, sinalizar o veículo e alertar as autoridades"},{id:4131859,txt:"Nenhuma das respostas anteriores está correcta"}], correct:3131859, hasImage:false },
+        { id:131860, q:"Em caso de acidente e suspeita de vítimas acidentadas com lesões deverá ligar para o:", opts:[{id:1131860,txt:"113"},{id:2131860,txt:"112"},{id:3131860,txt:"116"},{id:4131860,txt:"115"}], correct:2131860, hasImage:false },
+        // PÁGINA 38 e 39
+        { id:131861, q:"Fogo é uma reação química:", opts:[{id:1131861,txt:"Que ocorre num determinado local, sempre que o calor seja em excesso"},{id:2131861,txt:"Entre o combustível e o oxigénio do ar (comburente), face a uma fonte de calor"},{id:3131861,txt:"Provocada por uma fonte de energia"},{id:4131861,txt:"Que ocorre em determinados materiais provocado pelo aumento da temperatura"}], correct:2131861, hasImage:false },
+        { id:131862, q:"O 1º Socorro é a primeira assistência ou ajuda prestada a qualquer indivíduo vítima de acidente ou doença súbita, com o fim de evitar que o seu estado se agrave, e melhore se possível, até à chegada da ambulância, ou de socorros especializados. Os seus objetivos são:", opts:[{id:1131862,txt:"Manter a vida"},{id:2131862,txt:"Prevenir o aparecimento de novas lesões"},{id:3131862,txt:"Promover a recuperação"},{id:4131862,txt:"Todas as respostas anteriores estão corretas"}], correct:4131862, hasImage:false },
+        { id:131867, q:"Na reanimação cardio-respiratória, a razão entre as compressões torácicas e as insuflações é:", opts:[{id:1131867,txt:"15 compressões para 3 insuflações (15:3)"},{id:2131867,txt:"20 compressões para 5 insuflações (20:5)"},{id:3131867,txt:"30 compressões para 2 insuflações (30:2)"},{id:4131867,txt:"10 compressões para 1 insuflação (10:1)"}], correct:3131867, hasImage:false },
+        { id:131868, q:"Não devem ser aplicadas compressões abdominais em:", opts:[{id:1131868,txt:"Mulheres grávidas"},{id:2131868,txt:"Crianças com mais de 5 anos"},{id:3131868,txt:"Crianças com mais de 1 ano"},{id:4131868,txt:"Idosos com mais de 70 anos"}], correct:1131868, hasImage:false },
+        { id:131870, q:"A posição lateral de segurança:", opts:[{id:1131870,txt:"Deve ser provocada nas vítimas que respiram normalmente"},{id:2131870,txt:"Deve ser provocada nas vítimas que não respiram"},{id:3131870,txt:"Não é necessário confirmar regularmente a eficácia da respiração para provocar a posição referida"},{id:4131870,txt:"A posição lateral nunca deve ser provocada"}], correct:1131870, hasImage:false },
+        // PÁGINA 40
+        { id:131871, q:"Em caso de queimadura deve-se:", opts:[{id:1131871,txt:"Lavar o local com água quente durante aproximadamente 15 minutos"},{id:2131871,txt:"Não tocar na lesão"},{id:3131871,txt:"Furar as bolhas existentes"},{id:4131871,txt:"Colocar sobre a lesão soluções ou pomadas"}], correct:2131871, hasImage:false },
+        { id:131872, q:"Em caso de intoxicação:", opts:[{id:1131872,txt:"A vítima não deve ser retirada do local"},{id:2131872,txt:"Se a vítima estiver contaminada com tóxicos ou venenos o socorrista deve usar proteções do corpo e da roupa (luvas e avental)"},{id:3131872,txt:"Nunca é necessário retirar as peças de vestuário da vítima"},{id:4131872,txt:"Deve ser fornecido álcool à vítima"}], correct:2131872, hasImage:false },
+        { id:131874, q:"O exame primário da vítima consiste na:", opts:[{id:1131874,txt:"Observação do diâmetro das pupilas, da coloração, temperatura e grau de humidade da pele"},{id:2131874,txt:"Verificação em primeiro lugar da existência de ventilação"},{id:3131874,txt:"Avaliação em primeiro lugar da existência de pulsação"},{id:4131874,txt:"Avaliação em primeiro lugar do estado de consciência da vítima"}], correct:4131874, hasImage:false },
+        { id:131876, q:"Perante uma vítima de acidente o procedimento adequado é:", opts:[{id:1131876,txt:"Remover de imediato a vítima do veículo"},{id:2131876,txt:"Não movimentar a vítima, exceto se existir perigo iminente de incêndio, explosão ou qualquer outra situação que ponha em risco a vida da vítima"},{id:3131876,txt:"Não retirar em caso algum a vítima do veículo"},{id:4131876,txt:"Ajudar a vítima a sair do veículo"}], correct:2131876, hasImage:false },
+        { id:131877, q:"Os princípios gerais de socorrismo são:", opts:[{id:1131877,txt:"Prever, ajudar e socorrer"},{id:2131877,txt:"Parar, socorrer e alertar"},{id:3131877,txt:"Socorrer e ligar 112"},{id:4131877,txt:"Prevenir, alertar e socorrer"}], correct:4131877, hasImage:false },
+        // PÁGINA 41 e 42
+        { id:131878, q:"Uma vítima de asfixia por obstrução das vias respiratórias devido à presença de um corpo estranho deve ser socorrida:", opts:[{id:1131878,txt:"Com reanimação cárdio-pulmonar"},{id:2131878,txt:"Através da colocação em posição lateral de segurança"},{id:3131878,txt:"Com realização de pancadas interescapulares ou manobra de Heimlich"},{id:4131878,txt:"Através da colocação em decúbito dorsal"}], correct:3131878, hasImage:false },
+        { id:131879, q:"Para sinalizar corretamente o local do acidente o motorista deve:", opts:[{id:1131879,txt:"Estacionar o veículo antes do local do acidente, ligar as luzes de perigo, vestir o colete e colocar o sinal de pré-sinalização de perigo a pelo menos 30m da retaguarda do veículo ou da carga a sinalizar."},{id:2131879,txt:"Estacionar o veículo depois do local do acidente, ligar as luzes de perigo, vestir o colete e colocar o sinal de pré-sinalização de perigo a pelo menos 30m da retaguarda do veículo ou da carga a sinalizar."},{id:3131879,txt:"Estacionar o veículo antes do local do acidente, ligar as luzes de perigo, vestir o colete e colocar o sinal de pré-sinalização de perigo a pelo menos 50m da retaguarda do veículo ou da carga a sinalizar."},{id:4131879,txt:"Estacionar o veículo antes do local do acidente, ligar as luzes de perigo, vestir o colete e colocar o sinal de pré-sinalização de perigo a pelo menos 100m da retaguarda do veículo ou da carga a sinalizar."}], correct:1131879, hasImage:false },
+        { id:131880, q:"No caso da vítima não responder aos estímulos do socorrista, o procedimento correto é:", opts:[{id:1131880,txt:"Colocar de imediato em posição lateral de segurança"},{id:2131880,txt:"Iniciar logo as manobras de reanimação cárdio-pulmonar"},{id:3131880,txt:"Desobstruir as vias aéreas, fazer a extensão da cabeça, pedir ajuda e verificar se está a respirar"},{id:4131880,txt:"Colocar em decúbito dorsal"}], correct:3131880, hasImage:false },
+        { id:131881, q:"Em caso de incêndio, o jato do extintor deve ser direcionado para:", opts:[{id:1131881,txt:"A base das chamas"},{id:2131881,txt:"O meio das chamas"},{id:3131881,txt:"O topo das chamas"},{id:4131881,txt:"O topo e o meio das chamas alternadamente"}], correct:1131881, hasImage:false },
+        { id:131882, q:"Em caso de incêndio, o jato do extintor deve ser direcionado para:", opts:[{id:1131881,txt:"A base das chamas"},{id:2131881,txt:"O meio das chamas"},{id:3131881,txt:"O topo das chamas"},{id:4131881,txt:"O topo e o meio das chamas alternadamente"}], correct:1131881, hasImage:false },
+        // PÁGINA 43
+        { id:131883, q:"Quando se liga 112:", opts:[{id:1131883,txt:"A chamada é atendida automaticamente pelo INEM"},{id:2131883,txt:"Quem atende é um agente de autoridade"},{id:3131883,txt:"Estamos a ligar diretamente para os bombeiros"},{id:4131883,txt:"Todas as respostas anteriores estão corretas"}], correct:1131883, hasImage:false },
+        { id:131884, q:"Ao ligar 112, o mais importante é:", opts:[{id:1131884,txt:"Indicar o local da ocorrência"},{id:2131884,txt:"Explicar o que se passa com a vítima"},{id:3131884,txt:"Fornecer o número de telefone de onde se está a efetuar o pedido de socorro"},{id:4131884,txt:"Devem ser referidas todas as informações anteriores"}], correct:4131884, hasImage:false },
+        { id:131885, q:"Para perceber se alguém está em paragem cárdio-respiratória:", opts:[{id:1131885,txt:"Não se deve fazer nada até que a vítima responda"},{id:2131885,txt:"Se a vítima não nos responde, está de certeza em paragem cárdio-respiratória"},{id:3131885,txt:"Deve-se esperar durante 10 segundos para ver se a vítima respira ou não"},{id:4131885,txt:"Nenhuma das respostas anteriores está correta"}], correct:3131885, hasImage:false },
+        { id:131886, q:"Perante uma ferida simples numa zona sem fraturas:", opts:[{id:1131886,txt:"O melhor método é fazer compressão direta"},{id:2131886,txt:"Deve-se aplicar sempre um garrote"},{id:3131886,txt:"Deve-se ligar imediatamente 112 e não fazer nada"},{id:4131886,txt:"Uma hemorragia não é grave e por isso não é necessário fazer nada"}], correct:1131886, hasImage:false },
+        { id:131887, q:"Numa situação de queimadura, os cuidados de emergência visam:", opts:[{id:1131887,txt:"Aliviar a dor"},{id:2131887,txt:"Prevenir o choque"},{id:3131887,txt:"Prevenir a infecção"},{id:4131887,txt:"Todas as respostas anteriores estão corretas"}], correct:4131887, hasImage:false },
+        // PÁGINA 44 e 45
+    { id:131888, q:"Em caso de incêndio, um motorista:", opts:[{id:1131888,txt:"Tem de conseguir extinguir o incêndio antes de garantir a evacuação dos ocupantes do veículo."},{id:2131888,txt:"Não deve parar, exceto se o incêndio for no motor."},{id:3131888,txt:"Deve garantir a evacuação dos ocupantes do veículo para uma zona segura."},{id:4131888,txt:"Todas as respostas anteriores estão corretas."}], correct:3131888, hasImage:false },
+        { id:131889, q:"Em caso de tentativa de agressão ou agressão ao motorista:", opts:[{id:1131889,txt:"Não deve ser contactada a autoridade para evitar problemas."},{id:2131889,txt:"Deve adotar-se uma atitude de confronto."},{id:3131889,txt:"Os atos do motorista devem basear-se em evitar sempre o confronto."},{id:4131889,txt:"O motorista deve reagir violentamente e se possível imobilizar o agressor."}], correct:3131889, hasImage:false },
+        { id:131890, q:"Um condutor que assiste a um acidente no qual existam pessoas ou haja veículos danificados tem o dever de prestar o auxílio. Indique o comportamento que não deve ser adotado:", opts:[{id:1131890,txt:"Antes de sair do veículo para prestar auxílio, deve assegurar-se de que o próprio, os seus passageiros e o seu veículo estão em segurança."},{id:2131890,txt:"Manter a calma."},{id:3131890,txt:"Descrever corretamente qual a situação e responder às perguntas que a central de emergência faz."},{id:4131890,txt:"Não desligar a ignição dos veículos acidentados."}], correct:4131890, hasImage:false },
+        { id:131892, q:"Em caso de acidente com a sua viatura, qual o procedimento que não deve ser adotado?", opts:[{id:1131891,txt:"Manter a calma."},{id:2131891,txt:"Avaliar a segurança do local."},{id:3131891,txt:"Efetuar uma rápida avaliação da vítima."},{id:4131891,txt:"Abandonar o local."}], correct:4131891, hasImage:false },
+        { id:131893, q:"Quando ocorre um incêndio num veículo, o motorista deve adotar certos procedimentos. Das seguintes hipóteses, qual é aquela que não deve ser adotada?", opts:[{id:1131896,txt:"Ligar os 4 indicadores de mudança de direção."}], correct:1131896, hasImage:false },
+        // PÁGINA 46 e 47
+        { id:131896, q:"Para iniciar o socorro das vítimas é necessária a avaliação desta, através do exame primário, o qual consiste em:", opts:[{id:1131896,txt:"Avaliar se a vítima está consciente/inconsciente"},{id:2131896,txt:"Avaliar somente a ventilação"},{id:3131896,txt:"Observar mais detalhadamente e em interrogá-la"},{id:4131896,txt:"Avaliar somente a circulação e temperatura"}], correct:1131896, hasImage:false },
+        { id:131897, q:"No contexto do transporte rodoviário os riscos de agressão e violência aos motoristas e respectivos veículos tem vindo a aumentar. Em situações de agressão deve:", opts:[{id:1131897,txt:"Tentar prever potenciais situações de conflito e identificar potenciais agressores"},{id:2131897,txt:"Saber controlar as emoções e tomar decisões"},{id:3131897,txt:"Saber identificar potenciais agressores perante a autoridade"},{id:4131897,txt:"Tentar prever potenciais situações de conflito e identificar potenciais agressores, assim como controlar as emoções e tomar decisões"}], correct:4131897, hasImage:false },
+        { id:131898, q:"O exame primário da vítima consiste:", opts:[{id:1131898,txt:"Na observação do diâmetro das pupilas, da coloração, temperatura e grau de humidade da pele"},{id:2131898,txt:"Na verificação em primeiro lugar da existência de ventilação"},{id:3131898,txt:"Na avaliação em primeiro lugar da existência de pulsação"},{id:4131898,txt:"Na avaliação em primeiro lugar do estado de consciência da vítima"}], correct:4131898, hasImage:false },
+        { id:131899, q:"Perante uma situação de acidente, a sequência adequada na aplicação nas diversas fases do Sistema Integrado de Emergência Médica será:", opts:[{id:1131899,txt:"Pré-socorro, Socorro e Alerta"},{id:2131899,txt:"Detecção, Pré-socorro e Transporte"},{id:3131899,txt:"Alerta, Transporte e Socorro"},{id:4131899,txt:"Detecção, Alerta e Pré-socorro"}], correct:4131899, hasImage:false },
+        { id:131900, q:"Se um produto tóxico atingir o condutor nos olhos, este deverá imediatamente:", opts:[{id:1131900,txt:"Proteger os olhos do sol com recurso a óculos escuros"},{id:2131900,txt:"Utilizar água para lavar os olhos"},{id:3131900,txt:"Dirigir-se à localidade mais próxima para consultar o médico"}], correct:2131900, hasImage:false },
+        // PÁGINA 48
+        { id:131901, q:"Se numa situação de incêndio a roupa da vítima estiver a arder deve-se:", opts:[{id:1131901,txt:"Tirar rapidamente a roupa que estiver a arder"},{id:2131901,txt:"Apagar o fogo com extintor de pó químico"},{id:3131901,txt:"Envolver a vítima com um cobertor ou rolá-la pelo chão"},{id:4131901,txt:"Chamar de imediato o 112"}], correct:3131901, hasImage:false },
+        { id:130066, q:"O primeiro contacto com o motorista ajuda a criar uma boa impressão sobre o serviço.", opts:[{id:1130066,txt:"Verdadeiro"},{id:2130066,txt:"Falso"}], correct:1130066, hasImage:false },
+        { id:130067, q:"O processo de comunicação requer, no mínimo:", opts:[{id:1130067,txt:"Um emissor."},{id:2130067,txt:"Um recetor."},{id:3130067,txt:"Um emissor e um recetor."}], correct:3130067, hasImage:false },
+        { id:130068, q:"Como agir com um passageiro impaciente ou agressivo?", opts:[{id:1130068,txt:"Responder com a mesma agressividade."},{id:2130068,txt:"Manter a calma, ser cordial e evitar o conflito."},{id:3130068,txt:"Ignorar o passageiro e continuar a viagem."}], correct:2130068, hasImage:false },
+        { id:130069, q:"O que é o 'ruído' na comunicação?", opts:[{id:1130069,txt:"Uma conversa entre duas pessoas."},{id:2130069,txt:"Algo que dificulta a compreensão da mensagem."},{id:3130069,txt:"O som do rádio."}], correct:2130069, hasImage:false },
+        // PÁGINA 49
+        { id:130070, q:"O que é a comunicação verbal?", opts:[{id:1130070,txt:"Usar gestos e sinais para comunicar."},{id:2130070,txt:"Falar ou escrever para transmitir uma mensagem."},{id:3130070,txt:"Ficar em silêncio."}], correct:2130070, hasImage:false },
+        { id:130071, q:"Uma das funções importantes da comunicação é transmitir conhecimento.", opts:[{id:1130071,txt:"Verdadeiro"},{id:2130071,txt:"Falso"}], correct:1130071, hasImage:false },
+        { id:130072, q:"Um motorista deve comportar-se de forma?", opts:[{id:1130072,txt:"Agressiva."},{id:2130072,txt:"Passiva."},{id:3130072,txt:"Assertiva."}], correct:3130072, hasImage:false },
+        { id:130073, q:"Quando se pode dizer que a comunicação tem sucesso?", opts:[{id:1130073,txt:"Quando se fala muito rápido."},{id:2130073,txt:"Quando a mensagem é compreendida."},{id:3130073,txt:"Quando ninguém responde."}], correct:2130073, hasImage:false },
+        { id:130074, q:"Chamamos feedback:", opts:[{id:1130074,txt:"À resposta ou reação da pessoa à mensagem."},{id:2130074,txt:"Ao início de uma conversa."},{id:3130074,txt:"À forma como utilizamos o tom de voz."}], correct:1130074, hasImage:false },
+    // PÁGINA 50
+        { id:130075, q:"Um motorista tem um comportamento profissional quando:", opts:[{id:1130075,txt:"É apressado e impaciente durante a condução."},{id:2130075,txt:"Ignora os pedidos dos passageiros."},{id:3130075,txt:"É educado, respeita os passageiros e atende às suas necessidades."}], correct:3130075, hasImage:false },
+        { id:130076, q:"Qual a importância do tom de voz na comunicação?", opts:[{id:1130076,txt:"Ajuda a transmitir a mensagem de forma clara."},{id:2130076,txt:"Dificulta a compreensão da mensagem."}], correct:1130076, hasImage:false },
+        { id:130077, q:"Na comunicação com os passageiros é importante:", opts:[{id:1130077,txt:"Fazer perguntas durante toda a conversa"},{id:2130077,txt:"Ouvir para compreender."},{id:3130077,txt:"Falar rapidamente para terminar a conversa."}], correct:2130077, hasImage:false },
+        { id:130078, q:"Quando é permitido ultrapassar pela direita?", opts:[{id:1130078,txt:"Quando o veículo da frente circula lentamente."},{id:2130078,txt:"Quando o veículo da frente sinaliza que vai virar à esquerda."},{id:3130078,txt:"Em qualquer situação"}], correct:2130078, hasImage:false },
+        { id:130079, q:"O que deve fazer antes de iniciar uma ultrapassagem?", opts:[{id:1130079,txt:"Verificar se há espaço suficiente e visibilidade."},{id:2130079,txt:"Aumentar a velocidade."},{id:3130079,txt:"Aproximar-se ao máximo do veículo da frente."}], correct:1130079, hasImage:false },
+    // PÁGINA 51
+        { id:130080, q:"É permitido ultrapassar em curvas com visibilidade reduzida?", opts:[{id:1130080,txt:"Sim, é permitido."},{id:2130080,txt:"É proibido ultrapassar em curvas com visibilidade reduzida."},{id:3130080,txt:"Passar rapidamente antes que outro veículo chegue."}], correct:2130080, hasImage:false },
+        { id:130081, q:"Numa ultrapassagem, o motorista deve voltar à sua via de trânsito:", opts:[{id:1130081,txt:"Após aumentar a velocidade."},{id:2130081,txt:"Logo após concluir a manobra."},{id:3130081,txt:"Assim que o veículo ultrapassado fique visível no retrovisor."}], correct:3130081, hasImage:false },
+        { id:130082, q:"É proibido ultrapassar:", opts:[{id:1130082,txt:"Em lombas ou cruzamentos sem visibilidade."},{id:2130082,txt:"Quando o veículo é lento."},{id:3130082,txt:"Em autoestradas."}], correct:1130082, hasImage:false },
+        { id:130083, q:"Ao ultrapassar uma bicicleta, deve manter uma distância mínima lateral?", opts:[{id:1130083,txt:"Sim, de 1,5 metros."},{id:2130083,txt:"Sim, de 1 metro"},{id:3130083,txt:"Não."}], correct:1130083, hasImage:false },
+        { id:130084, q:"Este sinal significa que os automóveis pesados estão proibidos de ultrapassar.", opts:[{id:1130084,txt:"Sim"},{id:2130084,txt:"Não."}], correct:1130084, hasImage:true },
+    // PÁGINA 52
+        { id:130085, q:"O sinal de mudança de direção para a esquerda, do veículo que segue à frente, pode indicar:", opts:[{id:1130085,txt:"Diminuição de velocidade."},{id:2130085,txt:"Início de manobra de marcha atrás."},{id:3130085,txt:"Início de uma ultrapassagem."}], correct:3130085, hasImage:true },
+        { id:130086, q:"Pode ultrapassar o veículo que circula à frente?", opts:[{id:1130086,txt:"Sim, a manobra é permitida."},{id:2130086,txt:"Não, devo aguardar que o veículo termine a manobra."}], correct:1130086, hasImage:true },
+        { id:130087, q:"Pode ultrapassar o veículo à sua frente?", opts:[{id:1130087,txt:"Sim."},{id:2130087,txt:"Não."}], correct:1130087, hasImage:true },
+        { id:130088, q:"É permitido ultrapassar neste local?", opts:[{id:1130088,txt:"Sim."},{id:2130088,txt:"Não."}], correct:2130088, hasImage:true },
+        { id:7691, q:"O motociclo que transita na rotunda deve:", opts:[{id:17691,txt:"Ceder a passagem."},{id:27691,txt:"Avançar."},{id:37691,txt:"Ceder a passagem apenas aos veículos com motor que pretendam entrar na rotunda."}], correct:27691, hasImage:true },
+        { id:130089, q:"Ao entrar numa rotunda deve:", opts:[{id:1130089,txt:"Reduzir a velocidade e avançar sem parar."},{id:2130089,txt:"Avançar em primeiro lugar, porque tem prioridade de passagem."},{id:3130089,txt:"Ceder passagem aos veículos que já circulam na rotunda."}], correct:3130089, hasImage:true },
+        // PÁGINA 53
+        { id:130090, q:"O motorista deve sinalizar a saída de uma rotunda:", opts:[{id:1130090,txt:"Ao aproximar-se da saída."},{id:2130090,txt:"Não é necessário sinalizar."},{id:3130090,txt:"Apenas se houver trânsito intenso."}], correct:1130090, hasImage:false },
+        { id:130091, q:"Para mudar de via de circulação dentro de uma rotunda, o motorista deve:", opts:[{id:1130091,txt:"Mudar de via sem sinalizar."},{id:2130091,txt:"Sinalizar e garantir que a manobra é segura."},{id:3130091,txt:"Mudar rapidamente para sair mais depressa."}], correct:2130091, hasImage:false },
+        { id:130092, q:"Ao circular numa rotunda, o motorista deve saber que:", opts:[{id:1130092,txt:"Todos os veículos entram ao mesmo tempo."},{id:2130092,txt:"Os veículos em serviço de urgência devem ceder a passagem aos veículos que circulam na rotunda."},{id:3130092,txt:"Deve ceder a passagem aos veículos em serviço de urgência que entram na rotunda."}], correct:3130092, hasImage:false },
+        { id:130093, q:"Em rotundas, pode circular na via mais à direita:", opts:[{id:1130093,txt:"Apenas para sair na primeira saída."},{id:2130093,txt:"Sempre, independentemente da saída."}], correct:2130093, hasImage:false },
+        { id:130094, q:"O que deve fazer nesta situação?", opts:[{id:1130094,txt:"Ceder a passagem ao veículo cinzento."},{id:2130094,txt:"Avançar em primeiro lugar, por se apresentar pela direita."},{id:3130094,txt:"Parar obrigatoriamente, porque pretendo entrar na rotunda."}], correct:1130094, hasImage:true },
+        // PÁGINA 54
+        { id:130095, q:"O condutor da bicicleta deve ceder a passagem?", opts:[{id:1130095,txt:"Sim, porque a bicicleta se apresenta pela esquerda."},{id:2130095,txt:"Não, porque a bicicleta circula na rotunda."},{id:3130095,txt:"Apenas se houver veículos à sua frente."}], correct:2130095, hasImage:true },
+        { id:130096, q:"A velocidade deve ser ajustada:", opts:[{id:1130096,txt:"Apenas ao limite máximo permitido."},{id:2130096,txt:"Às condições da estrada e do trânsito."},{id:3130096,txt:"À vontade do condutor."}], correct:2130096, hasImage:false },
+        { id:130097, q:"Quando o piso está escorregadio, o motorista deve:", opts:[{id:1130097,txt:"Travar bruscamente."},{id:2130097,txt:"Reduzir a velocidade e evitar manobras bruscas."},{id:3130097,txt:"Aumentar a velocidade."}], correct:2130097, hasImage:false },
+        { id:130098, q:"Quando a visibilidade é reduzida, para além de utilizar as luzes, deve:", opts:[{id:1130098,txt:"Continuar com a mesma velocidade."},{id:2130098,txt:"Parar o veículo."},{id:3130098,txt:"Reduzir a velocidade e aumentar a distância para o veículo da frente."}], correct:3130098, hasImage:false },
+        { id:130099, q:"Quando a intensidade do trânsito aumenta, a velocidade deve:", opts:[{id:1130099,txt:"Diminuir."},{id:2130099,txt:"Aumentar."},{id:3130099,txt:"Ser mantida."}], correct:1130099, hasImage:false },
+        // PÁGINA 55
+        { id:130100, q:"Ao circular neste local, o motorista deve:", opts:[{id:1130100,txt:"Manter a velocidade sem preocupações."},{id:2130100,txt:"Aumentar um pouco a velocidade para evitar parar."},{id:3130100,txt:"Moderar a velocidade e parar se necessário."}], correct:3130100, hasImage:true },
+        { id:130101, q:"Qual a velocidade máxima permitida a um automóvel ligeiro, dentro de uma localidade?", opts:[{id:1130101,txt:"50 km/h"},{id:2130101,txt:"60 km/h"},{id:3130101,txt:"90 km/h"}], correct:1130101, hasImage:false },
+        { id:130102, q:"Neste local, posso transitar a 50 km/h?", opts:[{id:1130102,txt:"Não, porque a sinalização vertical o proíbe."},{id:2130102,txt:"Sim, porque dentro das localidades esta é a velocidade mínima obrigatória."},{id:3130102,txt:"Sim, porque o pavimento está em boas condições."}], correct:1130102, hasImage:true },
+        { id:130103, q:"O que deve fazer perante um sinal de STOP?", opts:[{id:1130103,txt:"Parar apenas se vier outro veículo."},{id:2130103,txt:"Parar obrigatoriamente antes de avançar."},{id:3130103,txt:"Reduzir a velocidade"}], correct:2130103, hasImage:true },
+        { id:130104, q:"Os sinais de proibição indicam:", opts:[{id:1130104,txt:"Informações úteis."},{id:2130104,txt:"Obrigações a cumprir."},{id:3130104,txt:"Restrições ou limites."}], correct:3130104, hasImage:false },
+        // PÁGINA 56
+        { id:130105, q:"A sinalização existente obriga o motorista a seguir em frente?", opts:[{id:1130105,txt:"Sim."},{id:2130105,txt:"Não."}], correct:1130105, hasImage:true },
+        { id:130106, q:"O sinal indica:", opts:[{id:1130106,txt:"Estacionamento autorizado."},{id:2130106,txt:"Estacionamento proibido."},{id:3130106,txt:"Apenas paragem permitida."}], correct:2130106, hasImage:true },
+        { id:130107, q:"O sinal indica:", opts:[{id:1130107,txt:"Passagem de peões"},{id:2130107,txt:"A existência de um túnel."},{id:3130107,txt:"Entrada num parque de estacionamento."}], correct:1130107, hasImage:true },
+        { id:130108, q:"O sinal com luz amarela está intermitente, pelo que o motorista:", opts:[{id:1130108,txt:"Deve parar."},{id:2130108,txt:"Deve acelerar."},{id:3130108,txt:"Pode passar, mas com cuidado."}], correct:3130108, hasImage:true },
+        { id:130109, q:"O que deve respeitar em primeiro lugar?", opts:[{id:1130109,txt:"Os sinais luminosos."},{id:2130109,txt:"As marcas rodoviárias."},{id:3130109,txt:"As ordens da polícia."}], correct:3130109, hasImage:false },
+        // PÁGINA 57
+        { id:130110, q:"Os sinais verticais de obrigação são:", opts:[{id:1130110,txt:"Circulares com fundo azul."},{id:2130110,txt:"Retangulares com fundo verde."},{id:3130110,txt:"Triangulares com borda vermelha."}], correct:1130110, hasImage:true },
+        { id:130111, q:"O que deve fazer perante este sinal?", opts:[{id:1130111,txt:"Ceder a passagem a todos os veículos."},{id:2130111,txt:"Avançar em primeiro lugar."},{id:3130111,txt:"Manter a velocidade."}], correct:1130111, hasImage:true },
+        { id:130112, q:"Quem deve avançar primeiro num cruzamento sem sinalização?", opts:[{id:1130112,txt:"O veículo mais rápido."},{id:2130112,txt:"O veículo que circula pela esquerda."},{id:3130112,txt:"O veículo que circula pela direita."}], correct:3130112, hasImage:true },
+        { id:130113, q:"Quando um peão atravessa numa passagem para peões, o motorista deve:", opts:[{id:1130113,txt:"Reduzir a velocidade, mas continuar."},{id:2130113,txt:"Acelerar para passar antes do peão."},{id:3130113,txt:"Parar e deixar o peão atravessar."}], correct:3130113, hasImage:true },
+        { id:130114, q:"O que o motorista deve fazer ao sair de um caminho particular?", opts:[{id:1130114,txt:"Ceder a passagem a todos os veículos e peões na via pública."},{id:2130114,txt:"Avançar sem ceder passagem."}], correct:1130114, hasImage:true },
+        { id:130115, q:"No próximo entroncamento, o motorista deve ceder a passagem?", opts:[{id:1130115,txt:"Sim."},{id:2130115,txt:"Não."}], correct:1130115, hasImage:true },
+        // PÁGINA 58
+        { id:130116, q:"Perante este sinal, o motorista deve:", opts:[{id:1130116,txt:"Avançar em primeiro lugar."},{id:2130116,txt:"Ceder a passagem."}], correct:2130116, hasImage:true },
+        { id:130117, q:"Qualquer veículo que saia de uma passagem de nível deve:", opts:[{id:1130117,txt:"Passar antes dos outros."},{id:2130117,txt:"Deixar os outros passarem primeiro."},{id:3130117,txt:"Parar em cima da passagem de nível."}], correct:2130117, hasImage:true },
+        { id:130118, q:"Ao encontrar este sinal, como deve proceder?", opts:[{id:1130118,txt:"Ceder a passagem a todos os veículos que circulem na via em que vai entrar."},{id:2130118,txt:"Ceder a passagem apenas aos veículos vindos da direita."},{id:3130118,txt:"Ceder a passagem apenas aos veículos vindos da esquerda."}], correct:1130118, hasImage:true },
+        { id:130119, q:"Uma condução defensiva é:", opts:[{id:1130119,txt:"Estar atento aos outros condutores, antecipando situações de risco."},{id:2130119,txt:"Conduzir sempre a alta velocidade."}], correct:1130119, hasImage:false },
+        { id:130120, q:"Ao conduzir à noite, o motorista deve:", opts:[{id:1130120,txt:"Reduzir a velocidade apenas nas curvas."},{id:2130120,txt:"Manter os máximos ligados em todas as situações."},{id:3130120,txt:"Ver e ser visto, usando corretamente as luzes."}], correct:3130120, hasImage:false },
+        { id:130121, q:"O que deve fazer em condições de nevoeiro?", opts:[{id:1130121,txt:"Usar as luzes de nevoeiro e ajustar a velocidade."},{id:2130121,txt:"Aumentar a velocidade para sair da área com nevoeiro."},{id:3130121,txt:"Manter as luzes desligadas para economizar energia."}], correct:1130121, hasImage:false },
+        // PÁGINA 59
+        { id:130122, q:"O que significa 'manter a distância de segurança'?", opts:[{id:1130122,txt:"Garantir a distância mínima entre veículos, de modo a evitar acidentes."},{id:2130122,txt:"Estar muito próximo do veículo da frente."}], correct:1130122, hasImage:false },
+        { id:130123, q:"O que significa 'eco condução'?", opts:[{id:1130123,txt:"Utilizar apenas veículos elétricos."},{id:2130123,txt:"Conduzir de forma eficiente, reduzindo o consumo de combustível e poluição."}], correct:2130123, hasImage:false },
+        { id:130124, q:"Como deve proceder ao conduzir com neve ou gelo?", opts:[{id:1130124,txt:"Aumentar a velocidade para evitar derrapagens."},{id:2130124,txt:"Travar bruscamente."},{id:3130124,txt:"Colocar correntes nos pneus e circular devagar."}], correct:3130124 },
+        { id:130125, q:"A correta pressão dos pneus contribui para uma condução mais económica.", opts:[{id:1130125,txt:"Verdadeiro"},{id:2130125,txt:"Falso"}], correct:1130125, hasImage:false },
+        { id:130126, q:"A condução sob a influência do álcool provoca no condutor a diminuição dos reflexos.", opts:[{id:1130126,txt:"Falso"},{id:2130126,txt:"Verdadeiro"}], correct:2130126, hasImage:false },
+        { id:130127, q:"O que deve fazer para diminuir as emissões de poluentes?", opts:[{id:1130127,txt:"Conduzir com o motor a altas rotações."},{id:2130127,txt:"Fazer a manutenção regular do veículo."},{id:3130127,txt:"Andar sempre com o ar condicionado ligado."}], correct:2130127, hasImage:false },
+        // PÁGINA 60
+        { id:130128, q:"Um motorista de TVDE pode conduzir com uma taxa de alcoolemia de 0,2 g/l.", opts:[{id:1130128,txt:"Sim, se estiver em boas condições físicas."},{id:2130128,txt:"Não."},{id:3130128,txt:"Sim, porque é um valor permitido."}], correct:2130128, hasImage:false },
+        { id:130129, q:"Conduzir com chuva tem como resultado:", opts:[{id:1130129,txt:"Maior aderência dos pneus ao piso."},{id:2130129,txt:"A redução da visibilidade."}], correct:2130129, hasImage:false },
+        { id:130130, q:"O que deve fazer ao conduzir em zonas de vento forte?", opts:[{id:1130130,txt:"Virar o volante no sentido contrário ao do vento."},{id:2130130,txt:"Aumentar a velocidade para atravessar a zona rapidamente."},{id:3130130,txt:"Reduzir a velocidade e manter firme o controlo do volante."}], correct:3130130, hasImage:false },
+        { id:133347, q:"A distância de travagem varia com:", opts:[{id:1133347,txt:"As condições atmosféricas."},{id:2133347,txt:"A largura da via."},{id:3133347,txt:"A sinalização vertical existente no local."}], correct:1133347, hasImage:false },
+        { id:130037, q:"Qual é o prazo de validade do certificado de motorista TVDE?", opts:[{id:1130037,txt:"3 anos"},{id:2130037,txt:"5 anos"},{id:3130037,txt:"10 anos"}], correct:3130037, hasImage:false },
+        // PÁGINA 61
+        { id:130039, q:"Qual é a lotação máxima permitida para veículos utilizados no serviço TVDE?", opts:[{id:1130039,txt:"7 lugares, incluindo o motorista"},{id:2130039,txt:"9 lugares, incluindo o motorista"},{id:3130039,txt:"12 lugares, incluindo o motorista"}], correct:1130039, hasImage:false },
+        { id:130041, q:"O que é obrigatório para o transporte de passageiros com mobilidade reduzida?", opts:[{id:1130041,txt:"Um veículo com capacidade para transportar cadeiras de rodas"},{id:2130041,txt:"Um veículo elétrico ou híbrido"},{id:3130041,txt:"Um motorista com formação adicional"}], correct:1130041, hasImage:false },
+        { id:130051, q:"O tempo máximo permitido para condução de motoristas TVDE é de 10 horas num período de 24 horas.", opts:[{id:1130051,txt:"Verdadeiro"},{id:2130051,txt:"Falso"}], correct:1130051, hasImage:false },
+        { id:130054, q:"Os serviços de TVDE podem ser pagos em dinheiro ou cartão de crédito.", opts:[{id:1130054,txt:"Verdadeiro"},{id:2130054,txt:"Falso"}], correct:1130054, hasImage:false },
+        { id:130131, q:"Qual é a idade máxima permitida para veículos utilizados no serviço TVDE?", opts:[{id:1130131,txt:"5 anos"},{id:2130131,txt:"10 anos"},{id:3130131,txt:"7 anos"}], correct:3130131, hasImage:false },
+        { id:130132, q:"Para se tornar motorista TVDE, tem de ter carta de condução da categoria B há mais de:", opts:[{id:1130132,txt:"1 ano"},{id:2130132,txt:"2 anos"},{id:3130132,txt:"3 anos"}], correct:3130132, hasImage:false },
+        // PÁGINA 62
+        { id:130133, q:"Os motoristas TVDE podem recolher passageiros diretamente na via pública, sem recurso a plataforma eletrónica?", opts:[{id:1130133,txt:"Sim."},{id:2130133,txt:"Não."}], correct:2130133, hasImage:false },
+        { id:130134, q:"Quem é responsável pela fiscalização do cumprimento das normas no serviço TVDE?", opts:[{id:1130134,txt:"GNR e IMT"},{id:2130134,txt:"GNR e PSP"},{id:3130134,txt:"PSP, GNR e IMT"}], correct:3130134, hasImage:false },
+        { id:130135, q:"Os motoristas TVDE devem possuir um curso de formação rodoviária inicial de 50 horas para exercerem a atividade.", opts:[{id:1130135,txt:"Verdadeiro"},{id:2130135,txt:"Falso"}], correct:1130135, hasImage:false },
+        { id:130136, q:"O serviço de TVDE só pode ser contratado através de plataforma eletrónica.", opts:[{id:1130136,txt:"Verdadeiro"},{id:2130136,txt:"Falso"}], correct:1130136, hasImage:false },
+        { id:130137, q:"Veículos usados no serviço TVDE podem ter matrícula estrangeira, desde que sejam autorizados pelo IMT.", opts:[{id:1130137,txt:"Sim."},{id:2130137,txt:"Não."}], correct:2130137, hasImage:false },
+        { id:130138, q:"Um veículo usado no serviço TVDE deve passar por uma inspeção técnica:", opts:[{id:1130138,txt:"1 ano após a matrícula e, depois, todos os anos."},{id:2130138,txt:"2 anos após a matrícula e, depois, de dois em dois anos."},{id:3130138,txt:"No prazo estipulado pelo IMT."}], correct:1130138, hasImage:false },
+        // PÁGINA 63
+        { id:130139, q:"O tempo de espera para passageiros com mobilidade reduzida deve ser:", opts:[{id:1130139,txt:"Superior a 30 minutos"},{id:2130139,txt:"Superior a 15 minutos."},{id:3130139,txt:"Inferior a 15 minutos."}], correct:3130139, hasImage:false },
+        { id:130140, q:"Os veículos TVDE podem circular nas vias reservadas a transportes públicos:", opts:[{id:1130140,txt:"Sim."},{id:2130140,txt:"Não."}], correct:2130140, hasImage:false },
+        { id:130141, q:"A que distância deve colocar o triângulo de pré-sinalização de perigo em caso de avaria?", opts:[{id:1130141,txt:"Pelo menos 10 metros."},{id:2130141,txt:"Pelo menos 50 metros."},{id:3130141,txt:"Pelo menos 30 metros."}], correct:3130141, hasImage:false },
+        { id:130142, q:"O que deve fazer ao encontrar um acidente com vítimas?", opts:[{id:1130142,txt:"Tentar resolver a situação sozinho."},{id:2130142,txt:"Garantir a segurança e ligar para o 112."},{id:3130142,txt:"Seguir a viagem, sem parar."}], correct:2130142, hasImage:false },
+        { id:130143, q:"Em que situação deve ligar para o número de emergência 112?", opts:[{id:1130143,txt:"Para pedir informações de trânsito."},{id:2130143,txt:"Para chamar um reboque."},{id:3130143,txt:"Sempre que houver necessidade de assistência urgente."}], correct:3130143, hasImage:false },
+        // PÁGINA 64
+        { id:130144, q:"O que deve informar ao ligar para o 112, em caso de acidente?", opts:[{id:1130144,txt:"Apenas o tipo de acidente."},{id:2130144,txt:"Localização exata, tipo de acidente e número de vítimas."},{id:3130144,txt:"A cor dos veículos envolvidos no acidente."}], correct:2130144, hasImage:false },
+        { id:130145, q:"O que deve fazer se houver um incêndio no motor do veículo?", opts:[{id:1130145,txt:"Abrir o capot rapidamente e apagar as chamas com água."},{id:2130145,txt:"Usar o extintor e apontar à base das chamas."},{id:3130145,txt:"Esperar que o fogo se apague."}], correct:2130145, hasImage:false },
+        { id:130146, q:"O que deve fazer após utilizar um extintor?", opts:[{id:1130146,txt:"Recarregá-lo ou substituí-lo por um novo."},{id:2130146,txt:"Guardá-lo no veículo, para a próxima utilização."}], correct:1130146, hasImage:false },
+        { id:130147, q:"Quando deve usar o colete retrorrefletor?", opts:[{id:1130147,txt:"Sempre que sair do veículo para sinalizar ou reparar."},{id:2130147,txt:"Somente em locais com pouca visibilidade."},{id:3130147,txt:"Apenas em estradas movimentadas."}], correct:1130147, hasImage:false },
+        { id:130148, q:"No primeiro contacto com uma vítima de um acidente, o que deve fazer primeiro?", opts:[{id:1130148,txt:"Verificar se respira e se tem pulsação."},{id:2130148,txt:"Retirar a vítima do veículo imediatamente."},{id:3130148,txt:"Procurar por ferimentos visíveis."}], correct:1130148, hasImage:false },
+        // PÁGINA 65
+        { id:130149, q:"Em caso de acidente com o seu veículo, deve:", opts:[{id:1130149,txt:"Sair rapidamente do veículo sem avisar outros condutores."},{id:2130149,txt:"Garantir a segurança no local, sinalizar e ligar para o 112."},{id:3130149,txt:"Resolver a situação sozinho, sem pedir ajuda."}], correct:2130149, hasImage:false },
+        { id:130150, q:"Em caso de queimadura deve:", opts:[{id:1130150,txt:"Lavar a zona afetada com água quente."},{id:2130150,txt:"Furar as bolhas existentes."},{id:3130150,txt:"Evitar tocar diretamente na área queimada."}], correct:3130150, hasImage:false },
+        { id:130151, q:"Para sinalizar corretamente o local de um acidente, o motorista deve:", opts:[{id:1130151,txt:"Ligar as luzes de perigo, vestir o colete refletor e colocar o triângulo de pré-sinalização de perigo."},{id:2130151,txt:"Abandonar o local do acidente."}], correct:1130151, hasImage:false },
+        { id:130152, q:"Os princípios gerais do socorrismo são:", opts:[{id:1130152,txt:"Prever, ajudar e socorrer."},{id:2130152,txt:"Parar, socorrer e alertar."},{id:3130152,txt:"Prevenir, alertar e socorrer."}], correct:3130152, hasImage:false }
+    ];
+
+        // ========== ESTADO DA APLICAÇÃO ==========
+        let currentQuestions = [];
+        let userAnswers = new Array(30).fill(null);
+        let currentIndex = 0;
+        let testResults = null;
+
+        // Elementos DOM
+        const homeScreen = document.getElementById('homeScreen');
+        const testScreen = document.getElementById('testScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        
+        const startBtn = document.getElementById('startTestBtn');
+        const exitBtn = document.getElementById('exitToHomeBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitTestBtn');
+        const newTestBtn = document.getElementById('newTestBtn');
+        const reviewBtn = document.getElementById('reviewBtn');
+        const homeBtn = document.getElementById('homeBtn');
+        const hideReviewBtn = document.getElementById('hideReviewBtn');
+
+        const qCounter = document.getElementById('qCounter');
+        const answeredCounter = document.getElementById('answeredCounter');
+        const questionNav = document.getElementById('questionNav');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const imageContainer = document.getElementById('imageContainer');
+        const questionImage = document.getElementById('questionImage');
+        const submitWarning = document.getElementById('submitWarning');
+
+        const resultIcon = document.getElementById('resultIcon');
+        const resultStatus = document.getElementById('resultStatus');
+        const resultScore = document.getElementById('resultScore');
+        const resultDetail = document.getElementById('resultDetail');
+        const resultMessage = document.getElementById('resultMessage');
+        const reviewPanel = document.getElementById('reviewPanel');
+        const reviewContent = document.getElementById('reviewContent');
+
+        // Modal
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // ========== FUNÇÕES ==========
+        function shuffleAndPick(array, n) {
+            const shuffled = [...array].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, n);
+        }
+
+        function renderNavigation() {
+            let html = '';
+            for (let i = 0; i < 30; i++) {
+                let classes = 'q-btn';
+                if (userAnswers[i] !== null) classes += ' answered';
+                if (i === currentIndex) classes += ' current';
+                html += `<button class="${classes}" data-index="${i}">${i + 1}</button>`;
+            }
+            questionNav.innerHTML = html;
+
+            document.querySelectorAll('.q-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.dataset.index);
+                    if (!isNaN(index)) {
+                        currentIndex = index;
+                        renderNavigation();
+                        renderQuestion();
+                    }
+                });
+            });
+        }
+
+        function renderQuestion() {
+            const q = currentQuestions[currentIndex];
+            if (!q) return;
+
+            questionText.textContent = q.q;
+            
+            // Remove completamente se não tem imagem
+            if (q.hasImage === true) {
+                // Tem imagem - mostra e carrega
+                imageContainer.classList.remove('hidden-image');
+                imageContainer.classList.add('show');
+                questionImage.src = `./imagens/${q.id}.jpg`;
+                
+                questionImage.onerror = function() {
+                    console.log('Erro ao carregar imagem:', q.id);
+                    this.src = 'https://via.placeholder.com/800x200?text=Imagem+indisponível';
+                };
+                
+            } else {
+                // Não tem imagem - esconde COMPLETAMENTE
+                imageContainer.classList.remove('show');
+                imageContainer.classList.add('hidden-image');
+                questionImage.src = ''; // Limpa qualquer src anterior
+                questionImage.onerror = null; // Remove handler de erro
+            }
+
+            // Opções
+            let html = '';
+            q.opts.forEach((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                const selected = userAnswers[currentIndex] === opt.id ? 'selected' : '';
+                html += `
+                    <div class="option ${selected}" data-opt-id="${opt.id}">
+                        <span class="option-letter">${letter}</span>
+                        ${opt.txt}
+                    </div>
+                `;
+            });
+            optionsContainer.innerHTML = html;
+
+            document.querySelectorAll('.option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const optId = parseInt(opt.dataset.optId);
+                    userAnswers[currentIndex] = optId;
+                    renderNavigation();
+                    renderQuestion();
+                    afterAnswerSelected();
+                });
+            });
+
+            qCounter.textContent = `${currentIndex + 1}/30`;
+            
+            // Botões navegação
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === 29;
+        }
+
+        function updateAnsweredCounter() {
+            const answered = userAnswers.filter(a => a !== null).length;
+            answeredCounter.textContent = `${answered}/30 respondidas`;
+        }
+
+        function checkAllAnswered() {
+            return userAnswers.every(a => a !== null);
+        }
+
+        function calculateResults() {
+            let correct = 0;
+            let incorrect = 0;
+            
+            for (let i = 0; i < 30; i++) {
+                if (userAnswers[i] === currentQuestions[i].correct) {
+                    correct++;
+                } else {
+                    incorrect++;
+                }
+            }
+            
+            return { correct, incorrect };
+        }
+
+        function showResults() {
+            if (!checkAllAnswered()) {
+                const missing = userAnswers.filter(a => a === null).length;
+                submitWarning.textContent = `⚠️ Aviso: Faltam responder ${missing} pergunta(s)`;
+                return;
+            }
+
+            submitWarning.textContent = '';
+            
+            const { correct, incorrect } = calculateResults();
+            const passed = correct >= 27;
+            
+            // Guardar para revisão
+            testResults = {
+                questions: currentQuestions,
+                answers: userAnswers,
+                correct,
+                incorrect
+            };
+            
+            // Atualizar ecrã de resultados
+            resultScore.textContent = `${correct}/30`;
+            resultDetail.textContent = `${correct} respostas corretas`;
+            
+            if (passed) {
+                resultIcon.textContent = '✅';
+                resultStatus.textContent = 'APROVADO';
+                resultStatus.className = 'result-status aprovado';
+                resultMessage.textContent = `Parabéns! Com ${correct} respostas corretas (${incorrect} erros), cumpriu os requisitos mínimos.`;
+            } else {
+                resultIcon.textContent = '❌';
+                resultStatus.textContent = 'REPROVADO';
+                resultStatus.className = 'result-status reprovado';
+                resultMessage.textContent = `Com ${correct} respostas corretas (${incorrect} erros), não atingiu o mínimo de 27. Tente novamente.`;
+            }
+            
+            testScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            reviewPanel.classList.add('hidden');
+        }
+
+        function renderReview() {
+            if (!testResults) return;
+            
+            let html = '';
+            const { questions, answers } = testResults;
+            
+            for (let i = 0; i < questions.length; i++) {
+                const q = questions[i];
+                const userAnswer = answers[i];
+                const correctId = q.correct;
+                
+                html += `
+                    <div class="review-item">
+                        <div class="review-question">${i + 1}. ${q.q}</div>
+                        <div class="review-options">
+                `;
+                
+                // Mostrar TODAS as opções
+                q.opts.forEach((opt, idx) => {
+                    const letter = String.fromCharCode(65 + idx);
+                    let classes = [];
+                    
+                    // Se é a resposta do utilizador
+                    if (opt.id === userAnswer) {
+                        classes.push('user');
+                    }
+                    
+                    // Se é a resposta correta
+                    if (opt.id === correctId) {
+                        classes.push('correct');
+                    }
+                    
+                    // Se o utilizador errou e esta é a opção errada que ele escolheu
+                    if (userAnswer !== correctId && opt.id === userAnswer) {
+                        classes.push('incorrect');
+                    }
+                    
+                    const classString = classes.length > 0 ? ` class="review-answer ${classes.join(' ')}"` : '';
+                    
+                    html += `
+                        <div${classString}>
+                            <strong>${letter})</strong> ${opt.txt}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            reviewContent.innerHTML = html;
+            reviewPanel.classList.remove('hidden');
+        }
+
+        // ========== EVENT LISTENERS ==========
+        startBtn.addEventListener('click', startNewTest);
+
+        exitBtn.addEventListener('click', () => {
+            testScreen.classList.add('hidden');
+            homeScreen.classList.remove('hidden');
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderNavigation();
+                renderQuestion();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < 29) {
+                currentIndex++;
+                renderNavigation();
+                renderQuestion();
+            }
+        });
+
+        submitBtn.addEventListener('click', showResults);
+
+        newTestBtn.addEventListener('click', () => {
+            resultScreen.classList.add('hidden');
+            startNewTest();
+        });
+
+        reviewBtn.addEventListener('click', renderReview);
+
+        homeBtn.addEventListener('click', () => {
+            resultScreen.classList.add('hidden');
+            homeScreen.classList.remove('hidden');
+        });
+
+        hideReviewBtn.addEventListener('click', () => {
+            reviewPanel.classList.add('hidden');
+        });
+
+        // Modal da imagem
+        imageContainer.addEventListener('click', () => {
+            if (questionImage.src) {
+                modalImage.src = questionImage.src;
+                imageModal.classList.add('show');
+            }
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            imageModal.classList.remove('show');
+        });
+
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) {
+                imageModal.classList.remove('show');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && imageModal.classList.contains('show')) {
+                imageModal.classList.remove('show');
+            }
+        });
+
+        // ========== CONTROLE DO BOTÃO SUBMIT ==========
+        function updateSubmitButton() {
+            const allAnswered = checkAllAnswered();
+            if (allAnswered) {
+                submitBtn.classList.remove('disabled');
+                submitBtn.disabled = false;
+                submitWarning.classList.add('hide');
+                setTimeout(() => {
+                    submitWarning.textContent = '';
+                    submitWarning.classList.remove('hide');
+                }, 300);
+            } else {
+                submitBtn.classList.add('disabled');
+                submitBtn.disabled = true;
+            }
+        }
+
+        function afterAnswerSelected() {
+            updateAnsweredCounter();
+            updateSubmitButton();
+        }
+
+        function startNewTest() {
+            currentQuestions = shuffleAndPick(allQuestions, 30);
+            userAnswers = new Array(30).fill(null);
+            currentIndex = 0;
+            testResults = null;
+            
+            homeScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            testScreen.classList.remove('hidden');
+            
+            renderNavigation();
+            renderQuestion();
+            afterAnswerSelected();
+            submitWarning.textContent = '';
+        }
+
+        // Listener para clicar fora do aviso
+        document.addEventListener('click', function(e) {
+            if (!submitWarning.contains(e.target) && submitWarning.textContent) {
+                submitWarning.classList.add('hide');
+                setTimeout(() => {
+                    submitWarning.textContent = '';
+                    submitWarning.classList.remove('hide');
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>
