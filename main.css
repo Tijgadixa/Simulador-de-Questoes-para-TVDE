@@ -51,6 +51,44 @@ body {
     color: #1a5a8c;
     font-size: 1.3rem;
 }
+
+.category-selector {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.category-selector label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.test-type-select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.test-type-select:hover {
+    border-color: #f3b33d;
+}
+
+.category-info {
+    background: #e8f4fd;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #0066cc;
+}
+
 .info-card {
     background: #f8fafd;
     border-radius: 15px;
