@@ -2,9 +2,9 @@
 
 ## Português (PT-PT)
 
-Este repositório contém o primeiro protótipo web que deu origem á  **AprovaTVDE**, uma app de preparação para o exame teórico TVDE.
+Este repositório contém o primeiro protótipo web que serviu de base para a **AprovaTVDE**, uma app de preparação para o exame teórico TVDE.
 
-A ideia inicial foi criar uma experiencia simples para treinar perguntas, navegar entre questões e rever resultados. Mais tarde, este conceito evoluiu para uma aplicação publicada na App Store, com uma experiencia mais completa, treino por categorias, modo exame, histórico e funcionamento offline.
+A ideia inicial foi criar uma experiência simples para treinar perguntas, navegar entre questões e rever resultados. Mais tarde, este conceito evoluiu para uma aplicação publicada na App Store, com uma experiência mais completa, treino por categorias, modo de exame, histórico e funcionamento offline.
 
 - Site oficial: https://aprovas.eu/
 - App Store: https://apps.apple.com/pt/app/aprovatvde/id6767650335
@@ -21,11 +21,11 @@ A ideia inicial foi criar uma experiencia simples para treinar perguntas, navega
 
 ## Evolução para a app
 
-A versão publicada da **AprovaTVDE** foi pensada para estudo rápido, foco no essencial e utilização simples. Segundo o site oficial, a app funciona offline, inclui Teste Rápido, Categorias e Exame, e permite acompanhar o progresso através do histórico.
+A versão publicada da **AprovaTVDE** foi pensada para estudar de forma rápida, focada e simples. Segundo o site oficial, a app funciona offline, inclui Teste Rápido, Categorias e Exame, e permite acompanhar o progresso através do histórico.
 
 ## English
 
-This repository contains the first web prototype that led to **AprovaTVDE**, a study app for TVDE theory exam preparation.
+This repository contains the first web prototype that became the foundation for **AprovaTVDE**, a study app for TVDE theory exam preparation.
 
 The initial goal was to create a simple experience for practising questions, navigating between them, and reviewing results. The concept later evolved into an App Store release with a more complete experience, category-based training, exam mode, history, and offline support.
 
